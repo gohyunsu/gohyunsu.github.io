@@ -417,7 +417,7 @@ window.SITE_DATA = {
       details: [
         {
           text:
-            "Awarded for “Smart Chicken Coops: Implementing Appropriate Technology for Rural Agriculture in Laos.”",
+            "Awarded for “Smart Chicken Coops: Implementing Appropriate Technology for Rural Agriculture in Laos”.",
           mentions: [
             {
               label: "“Smart Chicken Coops: Implementing Appropriate Technology for Rural Agriculture in Laos”",

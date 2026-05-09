@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-labelledby="title desc">
+  <title id="title">MMA-Former placeholder figure</title>
+  <desc id="desc">Abstract volumetric MRI blocks with multi-window attention paths.</desc>
+  <rect width="640" height="400" fill="#f7f4ec" />
+  <rect x="36" y="36" width="568" height="328" rx="28" fill="#fffdfa" stroke="#d9d3c6" />
+  <g transform="translate(92 116)">
+    <polygon points="0,48 96,0 192,48 96,96" fill="#d5e6e2" />
+    <polygon points="0,48 0,156 96,204 96,96" fill="#bed4d2" />
+    <polygon points="192,48 192,156 96,204 96,96" fill="#8db1b5" />
+    <rect x="50" y="58" width="92" height="18" rx="9" fill="#fff" opacity="0.65" />
+    <rect x="36" y="92" width="120" height="18" rx="9" fill="#fff" opacity="0.65" />
+  </g>
+  <g transform="translate(354 102)">
+    <rect x="0" y="0" width="170" height="42" rx="16" fill="#e8efed" />
+    <rect x="0" y="62" width="170" height="42" rx="16" fill="#d8e6e3" />
+    <rect x="0" y="124" width="170" height="42" rx="16" fill="#c1d8d8" />
+    <path d="M-54 44C-6 44 12 18 58 18" fill="none" stroke="#235963" stroke-width="10" stroke-linecap="round" />
+    <path d="M-62 92C2 92 10 82 74 82" fill="none" stroke="#6c9ba0" stroke-width="10" stroke-linecap="round" />
+    <path d="M-46 142C6 142 26 150 90 150" fill="none" stroke="#9fb8ba" stroke-width="10" stroke-linecap="round" />
+  </g>
+</svg>

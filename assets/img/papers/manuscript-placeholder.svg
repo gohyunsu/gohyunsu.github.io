@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-labelledby="title desc">
+  <title id="title">Submitted manuscript placeholder figure</title>
+  <desc id="desc">A neutral placeholder for submitted manuscripts.</desc>
+  <rect width="640" height="400" fill="#f7f4ec" />
+  <rect x="36" y="36" width="568" height="328" rx="28" fill="#fffdfa" stroke="#d9d3c6" />
+  <rect x="88" y="92" width="464" height="216" rx="24" fill="#eef3f2" stroke="#d4dfdd" />
+  <rect x="128" y="132" width="156" height="22" rx="11" fill="#b2c8ca" />
+  <rect x="128" y="170" width="324" height="16" rx="8" fill="#d2e1de" />
+  <rect x="128" y="198" width="278" height="16" rx="8" fill="#dbe7e5" />
+  <rect x="128" y="238" width="108" height="34" rx="17" fill="#235963" opacity="0.12" />
+  <text x="320" y="259" fill="#235963" font-family="Avenir Next, Helvetica, Arial, sans-serif" font-size="22" text-anchor="middle">
+    Submitted Manuscript
+  </text>
+</svg>

@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 800" role="img" aria-labelledby="title desc">
+  <title id="title">Profile placeholder</title>
+  <desc id="desc">An abstract portrait placeholder with a calm academic style.</desc>
+  <rect width="640" height="800" fill="#f7f3eb" />
+  <rect x="54" y="54" width="532" height="692" rx="32" fill="#fffdf9" stroke="#d7d2c8" />
+  <circle cx="320" cy="255" r="112" fill="#e8f0ee" />
+  <path
+    d="M241 308c18 51 55 84 79 84s61-33 79-84c6-18 9-38 9-56 0-54-35-101-88-101s-88 47-88 101c0 18 3 38 9 56z"
+    fill="#b9ced0"
+  />
+  <path
+    d="M193 602c28-104 103-166 127-166s99 62 127 166"
+    fill="none"
+    stroke="#235963"
+    stroke-linecap="round"
+    stroke-width="32"
+  />
+  <rect x="135" y="500" width="370" height="154" rx="76" fill="#edf3f2" />
+  <path
+    d="M219 579c32-45 68-68 101-68 33 0 69 23 101 68"
+    fill="none"
+    stroke="#9fb8ba"
+    stroke-linecap="round"
+    stroke-width="18"
+  />
+  <line x1="144" y1="684" x2="496" y2="684" stroke="#d8dfdb" />
+  <text x="320" y="709" fill="#235963" font-family="Georgia, serif" font-size="36" text-anchor="middle">
+    H G
+  </text>
+</svg>

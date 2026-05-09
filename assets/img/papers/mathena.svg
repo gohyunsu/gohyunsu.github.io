@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-labelledby="title desc">
+  <title id="title">MATHENA placeholder figure</title>
+  <desc id="desc">Abstract dental anatomy schematic with hierarchical structure.</desc>
+  <rect width="640" height="400" fill="#f7f4ec" />
+  <rect x="36" y="36" width="568" height="328" rx="28" fill="#fffdfa" stroke="#d9d3c6" />
+  <g transform="translate(88 108)">
+    <path
+      d="M42 74c0-30 26-54 58-54h168c32 0 58 24 58 54s-26 54-58 54H100C68 128 42 104 42 74z"
+      fill="#eef4f3"
+      stroke="#cddbd6"
+    />
+    <g fill="#ffffff" stroke="#7aa1a5" stroke-width="6">
+      <rect x="84" y="30" width="34" height="86" rx="16" />
+      <rect x="124" y="22" width="36" height="94" rx="16" />
+      <rect x="166" y="18" width="38" height="98" rx="16" />
+      <rect x="210" y="22" width="36" height="94" rx="16" />
+      <rect x="252" y="30" width="34" height="86" rx="16" />
+    </g>
+    <path d="M0 160C78 142 144 142 184 160s106 18 184 0" fill="none" stroke="#235963" stroke-width="12" stroke-linecap="round" />
+  </g>
+  <g transform="translate(426 110)">
+    <circle cx="0" cy="0" r="14" fill="#235963" />
+    <circle cx="70" cy="40" r="12" fill="#7ca5aa" />
+    <circle cx="0" cy="92" r="12" fill="#9cbabd" />
+    <circle cx="76" cy="138" r="10" fill="#bfd5d4" />
+    <path d="M12 4L58 30M10 86L58 52M72 52L72 128" fill="none" stroke="#235963" stroke-width="8" stroke-linecap="round" />
+  </g>
+</svg>

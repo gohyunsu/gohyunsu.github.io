@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" role="img" aria-labelledby="title desc">
+  <title id="title">LoSA-Net placeholder figure</title>
+  <desc id="desc">Abstract volumetric MRI blocks with localized boundary-sensitive regions.</desc>
+  <rect width="640" height="400" fill="#f7f4ec" />
+  <rect x="36" y="36" width="568" height="328" rx="28" fill="#fffdfa" stroke="#d9d3c6" />
+  <g transform="translate(96 106)">
+    <polygon points="0,62 108,0 216,62 108,124" fill="#d7e8e5" />
+    <polygon points="0,62 0,168 108,230 108,124" fill="#b9d0ce" />
+    <polygon points="216,62 216,168 108,230 108,124" fill="#8cacb0" />
+    <ellipse cx="122" cy="112" rx="72" ry="34" fill="none" stroke="#235963" stroke-width="14" />
+    <ellipse cx="122" cy="112" rx="44" ry="18" fill="none" stroke="#90aeb0" stroke-width="10" />
+  </g>
+  <g transform="translate(408 122)">
+    <rect x="0" y="0" width="108" height="24" rx="12" fill="#d6e5e0" />
+    <rect x="0" y="48" width="130" height="24" rx="12" fill="#c0d6d5" />
+    <rect x="0" y="96" width="88" height="24" rx="12" fill="#9ab8bc" />
+    <path d="M-96 12C-42 12 -20 42 0 60" fill="none" stroke="#235963" stroke-width="9" stroke-linecap="round" />
+    <path d="M-108 12C-52 12 -34 12 0 12" fill="none" stroke="#6f979c" stroke-width="9" stroke-linecap="round" />
+    <path d="M-104 12C-62 12 -42 80 0 108" fill="none" stroke="#9fb8ba" stroke-width="9" stroke-linecap="round" />
+  </g>
+</svg>

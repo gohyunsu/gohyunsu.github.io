@@ -364,7 +364,7 @@
       node.innerHTML = `
         <div class="section__inner">
           ${createEyebrow("🏅", "Honors")}
-          <h2 class="section__heading">Awards &amp; Scholarships</h2>
+          <h2 class="section__heading">Awards &amp; Scholarships.</h2>
           <div class="award-placeholder">
             <p>🏅 Selected awards and honors will be updated.</p>
           </div>
@@ -397,7 +397,7 @@
     node.innerHTML = `
       <div class="section__inner">
         ${createEyebrow("🏅", "Honors")}
-        <h2 class="section__heading">Awards &amp; Scholarships</h2>
+        <h2 class="section__heading">Awards &amp; Scholarships.</h2>
         <ul class="timeline-list">${items}</ul>
       </div>
     `;

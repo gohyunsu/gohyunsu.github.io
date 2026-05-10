@@ -448,12 +448,27 @@ window.SITE_DATA = {
       year: "May 2023-Present"
     },
     {
+      title: "The Education and Research Foundation College of Engineering SNU Scholarship",
+      issuer: "Seoul National University",
+      year: "Aug 2022, Feb 2023"
+    },
+    {
       title: "Top Prize, Energy New Industry Theme Research Program",
       issuer: "Seoul National University Energy New Industry Convergence University Project",
       year: "Jan 2023",
       details: [
         "Awarded for research on a digital-twin-based smart grid linking renewable and hydrogen energy systems."
       ]
+    },
+    {
+      title: "Merit-based Scholarship",
+      issuer: "Seoul National University",
+      year: "Feb 2022"
+    },
+    {
+      title: "SNU Development Fund Scholarship",
+      issuer: "Seoul National University",
+      year: "Aug 2021"
     }
   ],
 

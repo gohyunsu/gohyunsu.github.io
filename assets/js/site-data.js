@@ -371,7 +371,7 @@ window.SITE_DATA = {
       institution: "Exploring Computing: Applications in Everyday Life, Seoul National University",
       period: "Mar 2026-Present",
       description:
-        "Course preparation, tutoring, quizzes, and project mentoring for an introductory computing course."
+        "Led tutoring for a project-based computing course covering GUI and game programming, event-driven interaction, rendering, and web-based data visualization and automation."
     },
     {
       icon: "🧑‍🏫",
@@ -379,7 +379,23 @@ window.SITE_DATA = {
       institution: "Introduction to Mechanical System Design and Robot Programming, Seoul National University",
       period: "Mar 2023-Jun 2023",
       description:
-        "Supported an undergraduate course with instructional materials and hands-on tutorials in Python, ROS, and OpenCV."
+        "Supported a course on mechanical system design and robot programming, covering engineering drawings, CAD, programming in MATLAB, Python, and C/C++, and middleware-based robotic system integration."
+    },
+    {
+      icon: "🧑‍🏫",
+      title: "Peer Tutor",
+      institution: "Mathematics for Economics, Seoul National University",
+      period: "Sep 2022-Dec 2022",
+      description:
+        "Peer tutoring for a core economics mathematics course covering linear algebra, multivariable calculus, differential equations, and introductory optimization."
+    },
+    {
+      icon: "🧑‍🏫",
+      title: "Undergraduate Course Assistant",
+      institution: "Creative Engineering Design, Seoul National University",
+      period: "Sep 2022-Dec 2022",
+      description:
+        "Supported a first-year design-build course covering design fundamentals, kinematics, fabrication, prototyping, and competition-based engineering projects."
     }
   ],
 

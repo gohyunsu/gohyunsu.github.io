@@ -5,9 +5,9 @@ window.SITE_DATA = {
     role: "Student Researcher",
     subtitle: "",
     tagline:
-      "Student researcher working on biomedical signal learning and medical imaging, with growing interest in 3D vision and embodied AI.",
+      "Student researcher in biomedical signal learning and medical imaging, with growing interest in 3D vision and embodied AI.",
     bio:
-      "I work on biomedical signal learning for single-cell analysis and medical imaging for 3D MRI and clinical prediction. I am also studying 3D vision, generative modeling, human-object interaction, and embodied AI, with a broader interest in representation learning and efficient models.",
+      "My work focuses on biomedical signal learning for single-cell analysis and medical imaging for 3D MRI analysis and clinical prediction. I am increasingly interested in 3D vision, generative modeling, human-object interaction, and embodied AI, alongside a broader interest in representation learning and efficient models.",
     profileImage: "assets/img/profile.png",
     focusAreas: [
       {
@@ -16,11 +16,11 @@ window.SITE_DATA = {
       },
       {
         mark: "🏥",
-        text: "Medical imaging for 3D MRI and clinical prediction"
+        text: "Medical imaging for 3D MRI analysis and clinical prediction"
       },
       {
         mark: "🧭",
-        text: "Exploring 3D vision, generative modeling, and embodied AI"
+        text: "3D vision, generative modeling, and embodied AI"
       }
     ],
     location: "Seoul, South Korea"
@@ -90,7 +90,7 @@ window.SITE_DATA = {
       icon: "🧭",
       title: "3D Vision & Embodied AI",
       description:
-        "A newer direction of study spanning 3D vision, generative modeling, human-object interaction, and embodied AI."
+        "3D vision, generative modeling, human-object interaction, and embodied AI."
     }
   ],
 
@@ -313,7 +313,7 @@ window.SITE_DATA = {
         email: "knj01@snu.ac.kr"
       },
       description:
-        "3D MRI analysis, perineural invasion prediction, self-supervised learning, and efficient models for medical imaging."
+        "Medical imaging research focused on 3D MRI analysis, perineural invasion prediction, self-supervised learning, and efficient models."
     },
     {
       icon: "🧪",
@@ -327,7 +327,7 @@ window.SITE_DATA = {
         email: "joonhokang@snu.ac.kr"
       },
       description:
-        "SMR-based single-cell analysis, with emphasis on representation learning, cross-experiment correction, and interpretability."
+        "Single-cell signal analysis centered on representation learning, cross-experiment correction, and interpretability."
     },
     {
       icon: "⚡",
@@ -350,7 +350,7 @@ window.SITE_DATA = {
       institution: "Robot Vision, Seoul National University",
       period: "Sep 2025-Dec 2025",
       description:
-        "Course project with Jaeseung Kim on deformation-aware optical flow pretraining using deformed cost-volume autoencoding for greater robustness to non-rigid motion.",
+        "Course project with Jaeseung Kim on deformation-aware optical flow pretraining using deformed cost-volume autoencoding for non-rigid motion.",
       figure: "assets/img/projects/dmcva.png"
     },
     {
@@ -360,7 +360,7 @@ window.SITE_DATA = {
       institution: "Seoul National University Social Responsibility",
       period: "May 2023-Sep 2023",
       description:
-        "Led an appropriate-technology project for rural agriculture in Laos, developing sensor-based and solar-powered smart chicken coops."
+        "Appropriate-technology project for rural agriculture in Laos, focused on sensor-based and solar-powered smart chicken coops."
     }
   ],
 
@@ -371,7 +371,7 @@ window.SITE_DATA = {
       institution: "Exploring Computing: Applications in Everyday Life, Seoul National University",
       period: "Mar 2026-Present",
       description:
-        "Led tutoring for a project-based computing course covering GUI and game programming, event-driven interaction, rendering, and web-based data visualization and automation."
+        "Project-based computing course covering GUI and game programming, event-driven interaction, rendering, and web-based data visualization and automation."
     },
     {
       icon: "🤖",
@@ -379,7 +379,7 @@ window.SITE_DATA = {
       institution: "Introduction to Mechanical System Design and Robot Programming, Seoul National University",
       period: "Mar 2023-Jun 2023",
       description:
-        "Supported a course on mechanical system design and robot programming, covering engineering drawings, CAD, programming in MATLAB, Python, and C/C++, and middleware-based robotic system integration."
+        "Mechanical system design and robot programming course covering engineering drawings, CAD, programming in MATLAB, Python, and C/C++, and middleware-based robotic system integration."
     },
     {
       icon: "📐",
@@ -387,7 +387,7 @@ window.SITE_DATA = {
       institution: "Mathematics for Economics, Seoul National University",
       period: "Sep 2022-Dec 2022",
       description:
-        "Peer tutoring for a core economics mathematics course covering linear algebra, multivariable calculus, differential equations, and introductory optimization."
+        "Mathematics for economics course covering linear algebra, multivariable calculus, differential equations, and introductory optimization."
     },
     {
       icon: "🛠️",
@@ -395,7 +395,7 @@ window.SITE_DATA = {
       institution: "Creative Engineering Design, Seoul National University",
       period: "Sep 2022-Dec 2022",
       description:
-        "Supported a first-year design-build course covering design fundamentals, kinematics, fabrication, prototyping, and competition-based engineering projects."
+        "First-year design-build course covering design fundamentals, kinematics, fabrication, prototyping, and competition-based engineering projects."
     }
   ],
 
@@ -433,7 +433,7 @@ window.SITE_DATA = {
       details: [
         {
           text:
-            "Awarded for “Smart Chicken Coops: Implementing Appropriate Technology for Rural Agriculture in Laos”.",
+            "Awarded for the project “Smart Chicken Coops: Implementing Appropriate Technology for Rural Agriculture in Laos”.",
           mentions: [
             {
               label: "“Smart Chicken Coops: Implementing Appropriate Technology for Rural Agriculture in Laos”",

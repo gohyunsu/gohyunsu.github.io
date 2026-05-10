@@ -114,7 +114,7 @@
     node.innerHTML = `
       <div class="section__inner">
         ${createEyebrow("🧭", "Experience")}
-        <h2 class="section__heading">Research and academic activities.</h2>
+        <h2 class="section__heading">Academic activities.</h2>
         <div class="path-groups">
           ${createPathGroup("Research Experience", data.researchExperience)}
           ${createPathGroup("Projects", data.projects)}
@@ -240,7 +240,7 @@
         ${createEyebrow("🧪", "Research")}
         <h2 class="section__heading">Research directions.</h2>
         <p class="section__lead">
-          My recent research centers on biomedical signals and medical imaging, with growing interest in 3D vision and embodied AI.
+          My work centers on biomedical signals and medical imaging, with growing interest in 3D vision and embodied AI.
         </p>
         <div class="research-grid">${cards}</div>
       </div>

@@ -52,10 +52,9 @@ window.SITE_DATA = {
     },
     {
       label: "CV",
-      value: "Updated soon",
       display: "CV",
       mark: "📄",
-      url: null
+      url: "assets/cv/Hyunsu_Go_CV.pdf"
     },
     {
       label: "GitHub",
@@ -487,8 +486,7 @@ window.SITE_DATA = {
     {
       label: "CV",
       mark: "📄",
-      value: "Updated soon",
-      url: null
+      url: "assets/cv/Hyunsu_Go_CV.pdf"
     },
     {
       label: "GitHub",

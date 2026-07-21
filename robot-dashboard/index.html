@@ -3,15 +3,15 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="Team7 mecanum robot field dashboard: runbook, algorithm map, live tuning surface, and safety checks." />
-    <title>Team7 Robot Dashboard | Hyunsu Go</title>
+    <meta name="description" content="robot-challenge: Team7 mecanum robot runbook, control profile, and field safety checks." />
+    <title>robot-challenge | Hyunsu Go</title>
     <link rel="stylesheet" href="dashboard.css" />
   </head>
   <body>
     <a class="skip-link" href="#main">본문으로 이동</a>
     <header class="topbar">
       <div class="shell topbar__inner">
-        <a class="brand" href="../" aria-label="Hyunsu Go home">Hyunsu Go <span>/ Robot Ops</span></a>
+        <a class="brand" href="../" aria-label="Hyunsu Go home">Hyunsu Go <span>/ robot-challenge</span></a>
         <nav aria-label="대시보드 탐색">
           <a href="#runbook">Runbook</a>
           <a href="#architecture">Algorithm</a>
@@ -26,7 +26,7 @@
       <section class="hero shell" aria-labelledby="hero-title">
         <div>
           <p class="eyebrow"><span class="dot dot--live"></span>TEAM7 · FIELD OPERATIONS</p>
-          <h1 id="hero-title">Robot run을<br /><em>안전하게, 재현 가능하게.</em></h1>
+          <h1 id="hero-title">robot-<br /><em>challenge</em></h1>
           <p class="hero__lead">Seq1 → Seq6 mecanum arena course의 실행 순서, 제어 구조, 튜닝 변수와 현장 주의사항을 한 곳에 모았습니다. 이 페이지는 명령을 복사할 뿐, 로봇을 직접 제어하지 않습니다.</p>
           <div class="source-line">
             <span>Source snapshot</span>
@@ -86,9 +86,11 @@
           <div class="command-stack">
             <article class="command-card">
               <div><span class="step">A</span><h3>Tailscale · Jetson 접속</h3></div>
-              <p>먼저 Tailnet 상태를 확인한 뒤 MagicDNS를 통해 접속합니다. 현재 SSH는 22번 포트를 사용합니다.</p>
-              <pre id="cmd-connect"><code>tailscale ping mechanical
-ssh -tt -o PreferredAuthentications=password -o PubkeyAuthentication=no -p 22 mechanical@mechanical</code></pre>
+              <p>Tailnet 로그인·활성화 후 연결을 확인하고 Jetson에 접속합니다. 이미 로그인된 환경에서는 첫 두 줄을 생략할 수 있습니다.</p>
+              <pre id="cmd-connect"><code>tailscale login
+tailscale up
+tailscale ping mechanical
+ssh -tt -o PreferredAuthentications=password -o PubkeyAuthentication=no mechanical@100.103.1.57</code></pre>
               <button class="copy" data-copy="cmd-connect">명령 복사</button>
             </article>
             <article class="command-card">
@@ -100,9 +102,22 @@ sudo jetson_clocks
               <button class="copy" data-copy="cmd-dry">명령 복사</button>
             </article>
             <article class="command-card command-card--live">
-              <div><span class="step">C</span><h3>Live run · log · graceful stop</h3></div>
-              <p><strong>Detached run입니다.</strong> Tailscale 연결이 끊겨도 차량이 자동으로 멈추는 방식이 아닙니다. 실제 차단 담당자가 있어야 합니다.</p>
-              <pre id="cmd-live"><code>./arena.sh run
+              <div><span class="step">C</span><h3>Final live run · control profile</h3></div>
+              <p><strong>Detached run입니다.</strong> 아래는 Jetson 배포본에서 사용하는 최종 프로파일입니다. Tailscale 연결이 끊겨도 차량이 자동으로 멈추는 방식이 아니므로 실제 차단 담당자가 있어야 합니다.</p>
+              <pre id="cmd-live"><code>CH_STRAFE_FF=0 \
+CH_STRAFE_FF_R6=0 \
+GEN_STRAFE_YAW_KP=3.0 \
+GEN_YAW_KP=3.0 \
+GEN_YAW_INNER_DT=0.05 \
+GEN_VOTE_NORM=on \
+GEN_VOTE_MIN_NORM=12000 \
+GEN_VOTE_MAX_NORM=40000 \
+RG_RETURN_AFTER=3 \
+RG_REVERSE=1 \
+RG_HALF_TURN_ONESHOT=1 \
+./arena.sh run dodec pineapple_cube
+
+# monitor / graceful stop
 ./arena.sh tail
 ./arena.sh errs
 ./arena.sh stop</code></pre>
@@ -153,8 +168,19 @@ sudo jetson_clocks
           <article class="knob" data-kind="motion"><code>WALL_D0</code><strong>22 cm</strong><p>실제 <code>arena.sh</code> fallback. <code>lane_x = 404 − WALL_D0</code>. README 표의 20과 다르므로 런처를 우선합니다.</p></article>
           <article class="knob" data-kind="safety"><code>GEN_WALL_ESTOP</code><strong class="danger-text">0 (OFF)</strong><p>현재 기본값은 wall guard 비활성화. 필요 시 <code>GEN_WALL_ESTOP=1 ./arena.sh run</code>.</p></article>
           <article class="knob" data-kind="safety"><code>GEN_TIMED_HOP</code><strong>0 (OFF)</strong><p>timed hop은 4–7cm error로 검증되지 않아 closed-loop glide가 기본입니다.</p></article>
+          <article class="knob" data-kind="motion"><code>CH_STRAFE_FF</code><strong>0</strong><p>행 정렬 strafe의 공통 feed-forward offset입니다. 0이면 목표 행에 의도적으로 짧게 서는 bias를 주지 않습니다.</p></article>
+          <article class="knob" data-kind="motion"><code>CH_STRAFE_FF_R6</code><strong>0</strong><p>R6 정렬에만 적용하는 추가 strafe feed-forward입니다. 0으로 두어 R6에 별도 pre-offset을 넣지 않습니다.</p></article>
+          <article class="knob" data-kind="motion"><code>GEN_STRAFE_YAW_KP</code><strong>3.0</strong><p>옆이동 중 heading 보정 P gain입니다. strafe가 만들어내는 yaw drift를 잡되, 과도한 값은 흔들림을 키울 수 있습니다.</p></article>
+          <article class="knob" data-kind="motion"><code>GEN_YAW_KP</code><strong>3.0</strong><p>주행 leg 전반의 heading-hold P gain입니다. 낮으면 heading drift, 높으면 steering oscillation 가능성이 있습니다.</p></article>
+          <article class="knob" data-kind="motion"><code>GEN_YAW_INNER_DT</code><strong>0.05 s</strong><p>yaw 내부 제어 갱신 시간 기준입니다. 50ms로 두어 IMU yaw 보정의 업데이트 cadence를 정합니다.</p></article>
+          <article class="knob" data-kind="vision"><code>GEN_VOTE_NORM</code><strong>on</strong><p>goal vote에 range-normalized mask-area gate를 적용합니다. 멀리 있는 물체의 누수와 지나치게 가까운 mismatch를 줄입니다.</p></article>
+          <article class="knob" data-kind="vision"><code>GEN_VOTE_MIN_NORM</code><strong>12,000</strong><p>정규화된 goal mask-area의 하한입니다. 이보다 작은 표는 멀리 있는 객체/약한 검출로 보고 vote에서 제외합니다.</p></article>
+          <article class="knob" data-kind="vision"><code>GEN_VOTE_MAX_NORM</code><strong>40,000</strong><p>정규화된 goal mask-area의 상한입니다. 이보다 큰 표는 너무 가까운 객체나 잘못된 station 귀속 가능성을 줄이기 위해 제외합니다.</p></article>
+          <article class="knob" data-kind="safety"><code>RG_RETURN_AFTER</code><strong>3</strong><p>3개를 수집하면 즉시 goal로 복귀·배출합니다. collector fill limit과 복귀 시점을 함께 정합니다.</p></article>
+          <article class="knob" data-kind="safety"><code>RG_REVERSE</code><strong>1 (ON)</strong><p>배출 뒤 reverse trip을 활성화합니다. C1은 point-blank 판정 문제가 있어 return-look 결과와 함께 반드시 로그를 확인합니다.</p></article>
+          <article class="knob" data-kind="safety"><code>RG_HALF_TURN_ONESHOT</code><strong>1 (ON)</strong><p>180° 방향 전환을 90° 두 번이 아닌 한 번의 pulse로 실행합니다. 적재 상태에서의 retention은 현장 확인이 필요한 위험 항목입니다.</p></article>
         </div>
-        <div class="override-example"><span>ONE-RUN OVERRIDE</span><code>GEN_CMD_MAX=90 GEN_PULSE_BIAS=5 ./arena.sh run</code><button class="copy" data-copy="cmd-override">복사</button><code id="cmd-override" class="sr-only">GEN_CMD_MAX=90 GEN_PULSE_BIAS=5 ./arena.sh run</code></div>
+        <div class="override-example"><span>GOAL CLASSES</span><code>./arena.sh run dodec pineapple_cube</code><span>이번 run에서 수집 대상으로 취급할 segmentation class입니다.</span></div>
       </section>
 
       <section id="safety" class="section section--dark" aria-labelledby="safety-title">
@@ -181,7 +207,7 @@ sudo jetson_clocks
       </section>
     </main>
 
-    <footer><div class="shell">Team7 Robot Dashboard · Local documentation surface · Never a remote-control interface</div></footer>
+    <footer><div class="shell">robot-challenge · Local documentation surface · Never a remote-control interface</div></footer>
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
     <script src="dashboard.js"></script>
   </body>

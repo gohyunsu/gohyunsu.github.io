@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Team7 mecanum robot field dashboard: runbook, algorithm map, live tuning surface, and safety checks." />
+    <title>Team7 Robot Dashboard | Hyunsu Go</title>
+    <link rel="stylesheet" href="dashboard.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">본문으로 이동</a>
+    <header class="topbar">
+      <div class="shell topbar__inner">
+        <a class="brand" href="../" aria-label="Hyunsu Go home">Hyunsu Go <span>/ Robot Ops</span></a>
+        <nav aria-label="대시보드 탐색">
+          <a href="#runbook">Runbook</a>
+          <a href="#architecture">Algorithm</a>
+          <a href="#knobs">Knobs</a>
+          <a href="#safety">Safety</a>
+          <a href="https://github.com/junjinyong/snu-ai-robot-challenge-2026-team7" target="_blank" rel="noreferrer">Source ↗</a>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="hero shell" aria-labelledby="hero-title">
+        <div>
+          <p class="eyebrow"><span class="dot dot--live"></span>TEAM7 · FIELD OPERATIONS</p>
+          <h1 id="hero-title">Robot run을<br /><em>안전하게, 재현 가능하게.</em></h1>
+          <p class="hero__lead">Seq1 → Seq6 mecanum arena course의 실행 순서, 제어 구조, 튜닝 변수와 현장 주의사항을 한 곳에 모았습니다. 이 페이지는 명령을 복사할 뿐, 로봇을 직접 제어하지 않습니다.</p>
+          <div class="source-line">
+            <span>Source snapshot</span>
+            <code>main · 8253b5a · 2026-07-19</code>
+          </div>
+        </div>
+        <aside class="hero-card" aria-label="현재 런타임 계약">
+          <p class="card-kicker">LIVE RUN CONTRACT</p>
+          <dl>
+            <div><dt>Course</dt><dd>Seq1 → Seq6</dd></div>
+            <div><dt>Drive cap</dt><dd><code>GEN_CMD_MAX=120</code></dd></div>
+            <div><dt>Vision</dt><dd>dual camera · UDP 47021</dd></div>
+            <div><dt>Safety owner</dt><dd class="danger-text">physical cutoff operator</dd></div>
+          </dl>
+        </aside>
+      </section>
+
+      <section class="notice-band">
+        <div class="shell notice-grid">
+          <article class="notice notice--critical">
+            <p class="notice__tag">REBOOT REQUIRED</p>
+            <h2>재부팅 후 클럭을 반드시 고정</h2>
+            <p>Jetson의 동적 클럭 때문에 특정 leg tick이 <strong>0.20s → 0.34s</strong>까지 증가한 현장 사례가 있습니다. 주행 전 매 재부팅마다 실행하세요.</p>
+            <div class="inline-command"><code id="cmd-clocks">sudo jetson_clocks</code><button class="copy" data-copy="cmd-clocks">복사</button></div>
+          </article>
+          <article class="notice notice--camera">
+            <p class="notice__tag">MECHANICAL CHECK</p>
+            <h2>카메라 각도: 제일 밑까지</h2>
+            <p>주행 전 두 카메라의 물리 각도를 <strong>반드시 최하단</strong>으로 내리고, 장착을 건드렸다면 toe angle과 실제 FOV를 다시 검증하세요.</p>
+            <span class="chip">DUAL_TOE_R +26.9°</span><span class="chip">DUAL_TOE_L −26.9°</span>
+          </article>
+        </div>
+      </section>
+
+      <section id="runbook" class="section shell" aria-labelledby="runbook-title">
+        <div class="section-heading">
+          <p class="eyebrow">01 · RUNBOOK</p>
+          <h2 id="runbook-title">Pre-flight을 통과한 뒤에만 run.</h2>
+          <p>체크 상태는 이 브라우저에만 저장됩니다. 체크를 완료해도 로봇은 움직이지 않으며, 실제 명령은 아래에서 복사해 Jetson 터미널에 붙여 넣습니다.</p>
+        </div>
+
+        <div class="runbook-layout">
+          <div class="checklist" data-checklist>
+            <div class="checklist__header">
+              <div><p class="card-kicker">PHYSICAL GATE</p><h3>현장 확인</h3></div>
+              <output id="check-count">0 / 6 complete</output>
+            </div>
+            <label><input type="checkbox" data-check="clock" /><span><strong>재부팅 후 <code>jetson_clocks</code> 실행</strong><small>tick time 안정화</small></span></label>
+            <label><input type="checkbox" data-check="camera-angle" /><span><strong>양쪽 카메라를 최하단까지 내림</strong><small>FOV 및 객체 상단 clipping 방지</small></span></label>
+            <label><input type="checkbox" data-check="camera-stream" /><span><strong>양쪽 카메라 스트리밍 확인</strong><small>one-eyed run 금지</small></span></label>
+            <label><input type="checkbox" data-check="start-pose" /><span><strong>START (380, 20), mouth +y 배치</strong><small><code>bake_pin.py</code> gate의 기준 자세</small></span></label>
+            <label><input type="checkbox" data-check="teleop" /><span><strong>teleop / camera UI 종료 확인</strong><small>serial과 카메라 소유권 충돌 방지</small></span></label>
+            <label><input type="checkbox" data-check="cutoff" /><span><strong>물리 차단 담당자 배치</strong><small>현재 wall e-stop 기본값은 OFF</small></span></label>
+            <p id="run-gate" class="run-gate" role="status">아직 현장 확인이 필요합니다.</p>
+          </div>
+
+          <div class="command-stack">
+            <article class="command-card">
+              <div><span class="step">A</span><h3>Tailscale · Jetson 접속</h3></div>
+              <p>먼저 Tailnet 상태를 확인한 뒤 MagicDNS를 통해 접속합니다. 현재 SSH는 22번 포트를 사용합니다.</p>
+              <pre id="cmd-connect"><code>tailscale ping mechanical
+ssh -tt -o PreferredAuthentications=password -o PubkeyAuthentication=no -p 22 mechanical@mechanical</code></pre>
+              <button class="copy" data-copy="cmd-connect">명령 복사</button>
+            </article>
+            <article class="command-card">
+              <div><span class="step">B</span><h3>진입 · dry regression</h3></div>
+              <p>현재 Jetson 설치 경로 기준입니다. live run 전에 같은 pulse path의 dry run을 수행합니다.</p>
+              <pre id="cmd-dry"><code>cd ~/snu-ai-robot-challenge-2026-team7/nav
+sudo jetson_clocks
+./arena.sh dry</code></pre>
+              <button class="copy" data-copy="cmd-dry">명령 복사</button>
+            </article>
+            <article class="command-card command-card--live">
+              <div><span class="step">C</span><h3>Live run · log · graceful stop</h3></div>
+              <p><strong>Detached run입니다.</strong> Tailscale 연결이 끊겨도 차량이 자동으로 멈추는 방식이 아닙니다. 실제 차단 담당자가 있어야 합니다.</p>
+              <pre id="cmd-live"><code>./arena.sh run
+./arena.sh tail
+./arena.sh errs
+./arena.sh stop</code></pre>
+              <button class="copy" data-copy="cmd-live">명령 복사</button>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section id="architecture" class="section section--tint" aria-labelledby="architecture-title">
+        <div class="shell">
+          <div class="section-heading">
+            <p class="eyebrow">02 · ALGORITHM MAP</p>
+            <h2 id="architecture-title">Perception → pose → pulse-controlled motion.</h2>
+            <p>SLAM/odometry에 의존하지 않고, 404cm 사각 arena의 벽과 true frame을 기준으로 위치를 잡습니다. 듀얼 카메라는 객체 판별을 맡고 LiDAR는 벽·자세·주행 피드백을 맡습니다.</p>
+          </div>
+          <ol class="architecture-flow">
+            <li><span class="flow-num">01</span><div><h3>LiDAR wall fit</h3><p>RPLidar scan에서 사각 arena의 4벽을 robust fit. <code>(x, y, heading, quality)</code>를 true-frame으로 변환.</p><small><code>TrueFrameLoc</code> · <code>frame_pin.json</code></small></div></li>
+            <li><span class="flow-num">02</span><div><h3>Dual vision verdict</h3><p>C920 2대 + YOLO segmentation이 UDP <code>:47021</code>로 detection을 전달. confidence·frame count·mask area gate를 통과해야 goal commit.</p><small><code>vision_node_dual.py</code> · <code>GEN_MIN_CONF</code></small></div></li>
+            <li><span class="flow-num">03</span><div><h3>Course conductor</h3><p>한 프로세스에서 Seq1 C7 sweep → Seq2 R5_R6 channel → corner connector → Seq3–6를 연결. vision node는 prewarm 후 reuse.</p><small><code>run_course.py → conductor.main()</code></small></div></li>
+            <li><span class="flow-num">04</span><div><h3>Closed-loop primitives</h3><p>LiDAR/IMU feedback으로 line·lunge·strafe·turn을 실행. pose quality, stale pose, jump guard를 확인하며 motor command를 갱신.</p><small><code>motion.py</code> · <code>legs.py</code> · <code>turn.py</code></small></div></li>
+            <li><span class="flow-num">05</span><div><h3>One-shot pulse stop</h3><p>along-axis velocity를 추정해 fire point에서 1회 reverse brake. pulse duration은 속도 기반이고, short landing을 우선합니다.</p><small><code>stop.py</code> · <code>PulseStopper</code></small></div></li>
+            <li><span class="flow-num">06</span><div><h3>ESP mecanum output</h3><p>최종 body command가 ESP serial로 전달됩니다. 카메라·teleop가 serial을 잡고 있으면 run을 시작하지 않습니다.</p><small><code>/dev/ttyACM0</code> · physical cutoff</small></div></li>
+          </ol>
+        </div>
+      </section>
+
+      <section id="knobs" class="section shell" aria-labelledby="knobs-title">
+        <div class="section-heading section-heading--row">
+          <div><p class="eyebrow">03 · TUNING SURFACE</p><h2 id="knobs-title">실제 런처에서 읽는 변수.</h2><p><code>nav/arena.sh</code>의 <code>run)</code> block이 live default의 기준입니다. 한 run에만 적용하려면 파일을 수정하지 말고 환경변수로 override합니다.</p></div>
+          <div class="filter-group" role="group" aria-label="변수 범주 필터">
+            <button class="filter is-active" data-filter="all">All</button>
+            <button class="filter" data-filter="motion">Motion</button>
+            <button class="filter" data-filter="vision">Vision</button>
+            <button class="filter" data-filter="safety">Safety</button>
+          </div>
+        </div>
+        <div class="knob-grid" id="knob-grid">
+          <article class="knob" data-kind="motion"><code>GEN_CMD_MAX</code><strong>120</strong><p>실제 전체 속도 상한. 약 44 cm/s. 낮추면 모든 leg가 함께 느려집니다.</p></article>
+          <article class="knob" data-kind="motion"><code>GEN_CRUISE</code><strong>52</strong><p>scan/travel drive target. 이미 command cap에 포화하므로 단순히 높이지 않습니다.</p></article>
+          <article class="knob" data-kind="motion"><code>GEN_PULSE_CA / CB</code><strong>16 / 0</strong><p>reverse brake law. calibrated fire band 밖의 속도라면 재보정이 먼저입니다.</p></article>
+          <article class="knob" data-kind="motion"><code>GEN_PULSE_BIAS</code><strong>3 cm</strong><p>일찍 brake를 걸어 short landing. overshoot이면 올리고, short면 내립니다.</p></article>
+          <article class="knob" data-kind="motion"><code>GEN_TURN_RATE CW / CCW</code><strong>91 / 92 °/s</strong><p>open-loop turn pulse 길이를 정하는 값. over/under rotation의 첫 조정점입니다.</p></article>
+          <article class="knob" data-kind="vision"><code>GEN_MIN_CONF</code><strong>0.6</strong><p>모든 Seq의 confidence floor. 낮으면 miss 감소·false eat 증가입니다.</p></article>
+          <article class="knob" data-kind="vision"><code>GEN_MIN_FRAMES</code><strong>2</strong><p>verdict gate. cmd120에서는 객체당 2–3 frame만 확보될 수 있어 무작정 높이면 안 됩니다.</p></article>
+          <article class="knob" data-kind="vision"><code>CH_LEAD / COMMIT_LEAD</code><strong>74 cm</strong><p>object 이전 verdict read 지점. live run의 default lead입니다.</p></article>
+          <article class="knob" data-kind="vision"><code>DUAL_TOE R / L</code><strong>+26.9° / −26.9°</strong><p>카메라 mount를 움직였다면 반드시 재검증해야 하는 물리 calibration입니다.</p></article>
+          <article class="knob" data-kind="motion"><code>WALL_D0</code><strong>22 cm</strong><p>실제 <code>arena.sh</code> fallback. <code>lane_x = 404 − WALL_D0</code>. README 표의 20과 다르므로 런처를 우선합니다.</p></article>
+          <article class="knob" data-kind="safety"><code>GEN_WALL_ESTOP</code><strong class="danger-text">0 (OFF)</strong><p>현재 기본값은 wall guard 비활성화. 필요 시 <code>GEN_WALL_ESTOP=1 ./arena.sh run</code>.</p></article>
+          <article class="knob" data-kind="safety"><code>GEN_TIMED_HOP</code><strong>0 (OFF)</strong><p>timed hop은 4–7cm error로 검증되지 않아 closed-loop glide가 기본입니다.</p></article>
+        </div>
+        <div class="override-example"><span>ONE-RUN OVERRIDE</span><code>GEN_CMD_MAX=90 GEN_PULSE_BIAS=5 ./arena.sh run</code><button class="copy" data-copy="cmd-override">복사</button><code id="cmd-override" class="sr-only">GEN_CMD_MAX=90 GEN_PULSE_BIAS=5 ./arena.sh run</code></div>
+      </section>
+
+      <section id="safety" class="section section--dark" aria-labelledby="safety-title">
+        <div class="shell safety-layout">
+          <div>
+            <p class="eyebrow eyebrow--light">04 · SAFETY &amp; DATA</p>
+            <h2 id="safety-title">경고가 아니라,<br />실행 조건입니다.</h2>
+          </div>
+          <div class="safety-cards">
+            <article><span>01</span><h3>Blind run 금지</h3><p>camera guard가 양쪽 stream을 확인해야 합니다. 한쪽만 보이는 듀얼 run은 한 줄 전체를 놓칠 수 있습니다.</p></article>
+            <article><span>02</span><h3>Wall e-stop 기본 OFF</h3><p>현 코드의 기본값은 <code>GEN_WALL_ESTOP=0</code>입니다. 특히 +x wall/R6 turn 근처에서는 사람이 마지막 안전장치입니다.</p></article>
+            <article><span>03</span><h3>Runtime data는 휘발성</h3><p><code>/tmp</code> log와 <code>/dev/shm/frames</code>의 vision frame은 재부팅 또는 cleanup에 사라질 수 있습니다. run 직후 로컬로 pull하세요.</p></article>
+            <article><span>04</span><h3>Log first, tune second</h3><p><code>./arena.sh errs</code>에서 pose jump, stale pose, pulse error, turn residual을 읽고 한 번에 변수 하나만 바꿉니다.</p></article>
+          </div>
+        </div>
+      </section>
+
+      <section class="section shell" aria-labelledby="run-history-title">
+        <div class="section-heading"><p class="eyebrow">05 · LOCAL RUN ARCHIVE</p><h2 id="run-history-title">최근 보존 로그.</h2><p>Jetson에서 내려받은 로그 기준이며, 원격의 <code>/tmp</code>와 <code>/dev/shm</code> 출력은 영구 보관소가 아닙니다.</p></div>
+        <div class="history-grid">
+          <article><p class="card-kicker">2026-07-21 · 13:46 KST</p><h3><code>arena_run_044653</code></h3><p>약 194초 · 3 captured. Full output bundle: 3,745 files / 356MB preserved locally.</p><span class="status status--ok">ARCHIVED</span></article>
+          <article><p class="card-kicker">2026-07-21 · 13:42 KST</p><h3><code>arena_run_044210</code></h3><p>약 211초 · 5 captured, 1 empty. Remote temporary frames expired during pull; log and partial artifact set are local.</p><span class="status status--warn">PARTIAL FRAMES</span></article>
+        </div>
+      </section>
+    </main>
+
+    <footer><div class="shell">Team7 Robot Dashboard · Local documentation surface · Never a remote-control interface</div></footer>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="dashboard.js"></script>
+  </body>
+</html>

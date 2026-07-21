@@ -28,6 +28,7 @@ window.SITE_DATA = {
 
   navigation: [
     { label: "About", href: "#about" },
+    { label: "Robot Dashboard", href: "robot-dashboard/" },
     { label: "Research", href: "#research" },
     { label: "Publications", href: "#publications" },
     { label: "Experience", href: "#experience" },

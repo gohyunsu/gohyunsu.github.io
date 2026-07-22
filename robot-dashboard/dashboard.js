@@ -65,4 +65,20 @@
       knobs.forEach((knob) => { knob.hidden = selected !== "all" && knob.dataset.kind !== selected; });
     });
   });
+
+  const scenarioTabs = Array.from(document.querySelectorAll("[data-seq-scenario]"));
+  const scenarioPanels = Array.from(document.querySelectorAll("[data-seq-panel]"));
+  scenarioTabs.forEach((button) => {
+    button.addEventListener("click", () => {
+      const selected = button.dataset.seqScenario;
+      scenarioTabs.forEach((tab) => {
+        const active = tab === button;
+        tab.classList.toggle("is-active", active);
+        tab.setAttribute("aria-selected", String(active));
+      });
+      scenarioPanels.forEach((panel) => {
+        panel.hidden = panel.dataset.seqPanel !== selected;
+      });
+    });
+  });
 })();

@@ -15,6 +15,7 @@
         <nav aria-label="대시보드 탐색">
           <a href="#runbook">Runbook</a>
           <a href="#architecture">Algorithm</a>
+          <a href="#seq6r">Seq6r</a>
           <a href="#knobs">Knobs</a>
           <a href="#safety">Safety</a>
           <a href="https://github.com/junjinyong/snu-ai-robot-challenge-2026-team7" target="_blank" rel="noreferrer">Source ↗</a>
@@ -30,7 +31,7 @@
           <p class="hero__lead">Seq1 → Seq6 mecanum arena course의 실행 순서, 제어 구조, 튜닝 변수와 현장 주의사항을 한 곳에 모았습니다. 이 페이지는 명령을 복사할 뿐, 로봇을 직접 제어하지 않습니다.</p>
           <div class="source-line">
             <span>Source snapshot</span>
-            <code>main · 8253b5a · 2026-07-19</code>
+            <code>Jetson snapshot · bb73ab0 · 2026-07-22</code>
           </div>
         </div>
         <aside class="hero-card" aria-label="현재 런타임 계약">
@@ -145,9 +146,150 @@ RG_HALF_TURN_ONESHOT=1 \
         </div>
       </section>
 
+      <section id="seq6r" class="section seq6r-section" aria-labelledby="seq6r-title">
+        <div class="shell">
+          <div class="section-heading">
+            <p class="eyebrow">03 · SEQ6R ENTRY DESIGN</p>
+            <h2 id="seq6r-title">C2는 가장 잘 보일 때 먼저 판정하고,<br />기존 엔진이 그대로 소비한다.</h2>
+            <p>복귀 중 확정한 C1 verdict와 Seq6r entry에서 확보한 C2 verdict를 같은 <code>precheck</code> 계약으로 넘깁니다. 수거·case-2·look-ahead·다음 station 전환은 계속 <code>frame_engine</code>이 소유합니다.</p>
+          </div>
+
+          <div class="design-status" role="note">
+            <span>DESIGN TARGET</span>
+            <p><strong>문서 설계안이며 로봇 소스에는 아직 적용되지 않았습니다.</strong> Jetson 코드는 변경하지 않았습니다.</p>
+          </div>
+
+          <div class="seq6r-entry-grid">
+            <article class="entry-geometry">
+              <p class="card-kicker">BEST VANTAGE</p>
+              <h3>Entry pose에서 C2가 약 80cm 전방</h3>
+              <div class="arena-mini" aria-label="Seq6r entry에서 R1C2와 R2C2의 위치 관계">
+                <span class="arena-object arena-object--top">R2C2<small>+18° · ~80cm</small></span>
+                <span class="arena-car">ROBOT <b>▶</b><small>x≈21–23 · y=125.6</small></span>
+                <span class="arena-object arena-object--bottom">R1C2<small>−19° · ~81cm</small></span>
+                <i class="sight sight--top"></i><i class="sight sight--bottom"></i>
+              </div>
+              <p>C2의 lead window 중심은 x≈25이고 entry는 그 안에 있습니다. 회전 프레임을 버린 뒤 fresh pair를 확보하면, C1 수거 후의 짧은 단발 판정에 의존하지 않아도 됩니다.</p>
+            </article>
+
+            <article class="verdict-contract">
+              <p class="card-kicker">FIXED VERDICT CONTRACT</p>
+              <h3>판정 출처만 다르고 소비자는 하나</h3>
+              <dl>
+                <div><dt>C1</dt><dd>return-observe가 복귀 중 확정</dd></div>
+                <div><dt>C2</dt><dd>Seq6r entry에서 fresh pair 확정</dd></div>
+                <div><dt>C3–C6</dt><dd>기존 live rolling verdict</dd></div>
+                <div><dt>Consumer</dt><dd><code>frame_engine</code> 단일 상태기</dd></div>
+              </dl>
+              <p class="contract-note"><strong>유효한 C2 pair만 fixed.</strong> 한쪽이라도 frames 부족·UNKNOWN이면 C2 cache를 만들지 않고 기존 live 판정으로 fallback합니다.</p>
+            </article>
+          </div>
+
+          <div class="seq6r-comparison" aria-label="Seq6r 변경 전후 비교">
+            <article class="comparison comparison--before">
+              <p class="comparison__label">BEFORE · CURRENT SOURCE</p>
+              <h3>C2 판정 위치가 C1 상태에 따라 흔들림</h3>
+              <ol>
+                <li>C1 empty면 trim 후 C2+25cm, x≈124까지 blind advance</li>
+                <li>C1 target이면 수거 후 C2를 짧은 <code>read_ahead/diag_view</code>로 판정</li>
+                <li><code>no det</code>도 non-target처럼 C2를 pop할 수 있음</li>
+              </ol>
+            </article>
+            <article class="comparison comparison--after">
+              <p class="comparison__label">AFTER · PROPOSED</p>
+              <h3>Entry에서 C2를 고정하고 기존 chain 유지</h3>
+              <ol>
+                <li>C1은 return fixed, C2는 entry fresh pair로 준비</li>
+                <li>C1 empty의 <code>skipped → entry_along</code> advance 제거</li>
+                <li>기존 look-ahead가 live read 대신 cached C2를 즉시 소비</li>
+              </ol>
+            </article>
+          </div>
+
+          <div class="seq6r-flow-card">
+            <div class="flow-card__header">
+              <div><p class="card-kicker">STATE WALKTHROUGH</p><h3>C1 상태별로 실제로 이어지는 흐름</h3></div>
+              <div class="scenario-tabs" role="tablist" aria-label="C1 verdict 시나리오">
+                <button class="scenario-tab is-active" role="tab" aria-selected="true" aria-controls="scenario-empty" data-seq-scenario="empty">C1 empty</button>
+                <button class="scenario-tab" role="tab" aria-selected="false" aria-controls="scenario-single" data-seq-scenario="single">한쪽 target</button>
+                <button class="scenario-tab" role="tab" aria-selected="false" aria-controls="scenario-double" data-seq-scenario="double">양쪽 target</button>
+              </div>
+            </div>
+
+            <div id="scenario-empty" class="scenario-panel" role="tabpanel" data-seq-panel="empty">
+              <div class="state-node state-node--fixed"><span>01</span><strong>C1 fixed non-target</strong><small>카메라 재촬영 없이 즉시 pop</small></div>
+              <b class="state-arrow">→</b>
+              <div class="state-node state-node--fixed"><span>02</span><strong>C2 fixed pair 소비</strong><small>target이면 공용 eat · 아니면 pop</small></div>
+              <b class="state-arrow">→</b>
+              <div class="state-node"><span>03</span><strong>C3 live cruise</strong><small>x≈21에서 바로 이어짐</small></div>
+            </div>
+
+            <div id="scenario-single" class="scenario-panel" role="tabpanel" data-seq-panel="single" hidden>
+              <div class="state-node state-node--fixed"><span>01</span><strong>공용 C1 eat</strong><small>row strafe → square → +x lunge</small></div>
+              <b class="state-arrow">→</b>
+              <div class="state-node state-node--fixed"><span>02</span><strong>기존 C2 look-ahead</strong><small><code>_precheck</code>가 cached pair 즉시 반환</small></div>
+              <b class="state-arrow">→</b>
+              <div class="state-node"><span>03</span><strong>기존 chain</strong><small>forward-eat / diagonal / C3 복귀</small></div>
+            </div>
+
+            <div id="scenario-double" class="scenario-panel" role="tabpanel" data-seq-panel="double" hidden>
+              <div class="state-node state-node--fixed"><span>01</span><strong>R1C1 공용 eat</strong><small>R1C2 pre-record는 cache hit</small></div>
+              <b class="state-arrow">→</b>
+              <div class="state-node state-node--fixed"><span>02</span><strong>case-2 R2C1</strong><small>북쪽 eat → 동쪽 복귀</small></div>
+              <b class="state-arrow">→</b>
+              <div class="state-node"><span>03</span><strong>C2 cached chain</strong><small>R1C2 + R2C2를 기존 로직으로 처리</small></div>
+            </div>
+          </div>
+
+          <div class="seq6r-contract-grid">
+            <article>
+              <p class="card-kicker">NO MID-TRANSITION PAUSE</p>
+              <h3>새 정지는 entry acquisition 한 번뿐</h3>
+              <p>동쪽 회전 직후 약 0.6–1.0초 fresh frame을 확보합니다. 이후 C1→C2 사이에는 fixed boundary, 강제 centreline, 추가 camera dwell이 없습니다. 캐시는 메모리 dict 조회로 즉시 반환됩니다.</p>
+            </article>
+            <article>
+              <p class="card-kicker">AUTHORITATIVE PAIR</p>
+              <h3>fixed non-target도 재-scan하지 않음</h3>
+              <p><code>fixed_verdict_labels={C1,C2}</code> 중 양쪽 cell이 유효한 label은 target이면 먹고, 둘 다 non-target이면 즉시 pop합니다. 불완전한 C2 pair는 fixed로 승격하지 않습니다.</p>
+            </article>
+            <article>
+              <p class="card-kicker">UNCHANGED MOTION</p>
+              <h3>수거 primitive는 그대로</h3>
+              <p><code>eat_from_centreline()</code>, <code>forward_eat()</code>, <code>turn_eat()</code>, look-ahead chain을 유지합니다. C2의 판정 시점만 좋은 위치로 앞당깁니다.</p>
+            </article>
+          </div>
+
+          <div class="seq6r-implementation">
+            <div>
+              <p class="card-kicker">CHANGE MAP</p>
+              <h3>구현 시 바뀌는 소유권</h3>
+            </div>
+            <table>
+              <thead><tr><th>파일</th><th>변경</th><th>유지</th></tr></thead>
+              <tbody>
+                <tr><td><code>reverse.py</code></td><td>C1 유지, blind advance 제거, entry C2 pair 생성·merge</td><td>route·deposit·turn</td></tr>
+                <tr><td><code>frame_engine.py</code></td><td>entry pair helper와 authoritative fixed-pair 표시</td><td>eat/case-2/look-ahead 상태기</td></tr>
+                <tr><td><code>return_observe.py</code></td><td>변경 없음</td><td>C1 fixed verdict</td></tr>
+                <tr><td><code>ledger.py</code></td><td>변경 없음</td><td>C2 cache는 ledger가 아닌 Seq6r 로컬 precheck</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="seq6r-checks">
+            <p class="card-kicker">ACCEPTANCE LOGS</p>
+            <ul>
+              <li><code>[seq6r-entry] C2 fixed pair</code>가 동쪽 회전 뒤 fresh frames와 함께 남아야 함</li>
+              <li>C1 empty 로그에서 x≈124 <code>advance to first unresolved station</code>이 없어야 함</li>
+              <li>C1 target 뒤 C2 look-ahead가 <code>precheck</code>를 반환하고 별도 camera dwell을 만들지 않아야 함</li>
+              <li>C2 pair 불완전 시 fixed 표시 없이 기존 live verdict로 fallback해야 함</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
       <section id="knobs" class="section shell" aria-labelledby="knobs-title">
         <div class="section-heading section-heading--row">
-          <div><p class="eyebrow">03 · TUNING SURFACE</p><h2 id="knobs-title">실제 런처에서 읽는 변수.</h2><p><code>nav/arena.sh</code>의 <code>run)</code> block이 live default의 기준입니다. 한 run에만 적용하려면 파일을 수정하지 말고 환경변수로 override합니다.</p></div>
+          <div><p class="eyebrow">04 · TUNING SURFACE</p><h2 id="knobs-title">실제 런처에서 읽는 변수.</h2><p><code>nav/arena.sh</code>의 <code>run)</code> block이 live default의 기준입니다. 한 run에만 적용하려면 파일을 수정하지 말고 환경변수로 override합니다.</p></div>
           <div class="filter-group" role="group" aria-label="변수 범주 필터">
             <button class="filter is-active" data-filter="all">All</button>
             <button class="filter" data-filter="motion">Motion</button>
@@ -186,7 +328,7 @@ RG_HALF_TURN_ONESHOT=1 \
       <section id="safety" class="section section--dark" aria-labelledby="safety-title">
         <div class="shell safety-layout">
           <div>
-            <p class="eyebrow eyebrow--light">04 · SAFETY &amp; DATA</p>
+            <p class="eyebrow eyebrow--light">05 · SAFETY &amp; DATA</p>
             <h2 id="safety-title">경고가 아니라,<br />실행 조건입니다.</h2>
           </div>
           <div class="safety-cards">
@@ -199,7 +341,7 @@ RG_HALF_TURN_ONESHOT=1 \
       </section>
 
       <section class="section shell" aria-labelledby="run-history-title">
-        <div class="section-heading"><p class="eyebrow">05 · LOCAL RUN ARCHIVE</p><h2 id="run-history-title">최근 보존 로그.</h2><p>Jetson에서 내려받은 로그 기준이며, 원격의 <code>/tmp</code>와 <code>/dev/shm</code> 출력은 영구 보관소가 아닙니다.</p></div>
+        <div class="section-heading"><p class="eyebrow">06 · LOCAL RUN ARCHIVE</p><h2 id="run-history-title">최근 보존 로그.</h2><p>Jetson에서 내려받은 로그 기준이며, 원격의 <code>/tmp</code>와 <code>/dev/shm</code> 출력은 영구 보관소가 아닙니다.</p></div>
         <div class="history-grid">
           <article><p class="card-kicker">2026-07-21 · 13:46 KST</p><h3><code>arena_run_044653</code></h3><p>약 194초 · 3 captured. Full output bundle: 3,745 files / 356MB preserved locally.</p><span class="status status--ok">ARCHIVED</span></article>
           <article><p class="card-kicker">2026-07-21 · 13:42 KST</p><h3><code>arena_run_044210</code></h3><p>약 211초 · 5 captured, 1 empty. Remote temporary frames expired during pull; log and partial artifact set are local.</p><span class="status status--warn">PARTIAL FRAMES</span></article>

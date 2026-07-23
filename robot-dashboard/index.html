@@ -17,6 +17,7 @@
           <a href="#architecture">Algorithm</a>
           <a href="#seq6r">Seq6r</a>
           <a href="#return-map">Return map</a>
+          <a href="#third-plan">Third plan</a>
           <a href="#knobs">Knobs</a>
           <a href="#safety">Safety</a>
           <a href="https://github.com/junjinyong/snu-ai-robot-challenge-2026-team7" target="_blank" rel="noreferrer">Source ↗</a>
@@ -407,9 +408,148 @@ RG_HALF_TURN_ONESHOT=1 \
         </div>
       </section>
 
+      <section id="third-plan" class="section third-plan-section" aria-labelledby="third-plan-title">
+        <div class="shell">
+          <div class="section-heading">
+            <p class="eyebrow">05 · THIRD EXPLORATION IMPLEMENTATION</p>
+            <h2 id="third-plan-title">새 탐색기가 아니라,<br />기존 두 경로의 정확한 hand-off.</h2>
+            <p>3차 탐색 본체는 현재 <code>reverse.py</code>의 추가 trip이 이미 호출하는 <code>_one_pass() → trim_to_frontier() → frame_engine</code>을 그대로 사용합니다. 정상 종료 시 바꾸는 것은 <strong>trip 2의 첫 <code>CargoFull</code> 이후 return family</strong>뿐입니다.</p>
+          </div>
+
+          <div class="third-plan-status" role="note">
+            <span>PLAN · JETSON NOT MODIFIED</span>
+            <p><strong>탐색·판정·수거는 변경 없음.</strong> 2차 재개 상태기를 한 번 더 실행하고, 한 개를 먹으면 1차의 west-first <code>return_to_goal</code> 경로로 복귀합니다.</p>
+          </div>
+
+          <div class="third-state-flow" aria-label="3차 탐색 상태 전이">
+            <article class="third-flow-node is-existing"><span>01 · EXISTING</span><strong>2차 south 복귀</strong><small>trip 1의 기존 <code>_drive_refill_return()</code></small></article>
+            <i aria-hidden="true">→</i>
+            <article class="third-flow-node is-existing"><span>02 · EXISTING</span><strong>3차 launch gate</strong><small><code>RG_REV_TIME_TRIPS</code> + clock + frontier</small></article>
+            <i aria-hidden="true">→</i>
+            <article class="third-flow-node is-existing"><span>03 · EXISTING</span><strong>2차 상태기 재개</strong><small><code>_one_pass()</code>와 같은 <code>frame_engine</code></small></article>
+            <i aria-hidden="true">→</i>
+            <article class="third-flow-node is-existing"><span>04 · EXISTING</span><strong>첫 target 1개</strong><small><code>CARGO.arm(1)</code> → <code>CargoFull</code></small></article>
+            <i aria-hidden="true">→</i>
+            <article class="third-flow-node is-change"><span>05 · ONLY CHANGE</span><strong>west return 선택</strong><small><code>trip &gt;= 2</code>이면 <code>VIA_SOUTH=False</code></small></article>
+            <i aria-hidden="true">→</i>
+            <article class="third-flow-node is-existing"><span>06 · EXISTING</span><strong>1차 복귀 그대로</strong><small><code>_route_via()</code> → goal → 종료</small></article>
+          </div>
+
+          <div class="third-reuse-grid">
+            <article>
+              <p class="card-kicker">UNCHANGED OWNERS</p>
+              <h3>그대로 두는 코드</h3>
+              <ul>
+                <li><code>frame_engine.py</code>: station 판정, case-2, eat, look-ahead</li>
+                <li><code>ledger.py</code>: resolved/frontier 순서와 재개 판단</li>
+                <li><code>cargo.py</code>: <code>CARGO.note()</code>와 <code>CargoFull</code></li>
+                <li><code>return_to_goal.py</code>: channel 선택, clearance, turn/drive primitive</li>
+              </ul>
+            </article>
+            <article>
+              <p class="card-kicker">MINIMUM DELTA</p>
+              <h3>추가하는 결정 하나</h3>
+              <ul>
+                <li>trip 1 return: 지금처럼 <strong>south family</strong></li>
+                <li>trip 2 first eat: <strong>west family</strong>로 분기</li>
+                <li>third goal x만 <code>RG_REV_THIRD_GOAL_X</code>로 임시 override</li>
+                <li>west 복귀가 끝나면 무조건 <code>break</code> — 4차 launch 없음</li>
+              </ul>
+            </article>
+          </div>
+
+          <article class="third-west-card">
+            <div>
+              <p class="card-kicker">REUSED ROUTE · return_to_goal._route_via()</p>
+              <h3>3차 첫 수거 위치 → west wall → goal</h3>
+              <p>먹은 위치의 fresh stationary pose와 nominal-cell 25cm guard를 그대로 통과시킨 다음, 1차 복귀 planner가 안전한 cross-channel을 선택합니다. 로봇은 필요할 때만 west로 회전하고, 이미 h−90°라면 회전을 생략한 채 서쪽으로 횡단한 뒤 south로 회전합니다.</p>
+            </div>
+            <ol class="west-route-rail">
+              <li><span>CAPTURE</span><strong>target 1개 수거</strong><small>현재 cell pose · collector 1/1</small></li>
+              <li><span>ALIGN HEADING</span><strong>mouth west · h−90°</strong><small>필요 시 <code>_turn_steps(..., −90)</code> · 이미 west면 no-op</small></li>
+              <li><span>ALIGN</span><strong>clear y-channel로 lateral strafe</strong><small><code>to-channel</code> · 현재 x 유지</small></li>
+              <li><span>CROSS</span><strong>서쪽 전진 → x=23</strong><small><code>cross-west</code> · <code>RG_CROSS_DY=4</code> 유지</small></li>
+              <li><span>TURN</span><strong>mouth south · h180°</strong><small>west lane에서 기존 90° 회전</small></li>
+              <li><span>DESCEND</span><strong>goal까지 남하</strong><small><code>descend-to-goal</code> · <code>RG_HUG_INLINE=1</code></small></li>
+              <li><span>STOP</span><strong>(third goal x, 15)</strong><small>한 개 bank · 추가 deposit/trip 없음</small></li>
+            </ol>
+          </article>
+
+          <div class="third-implementation-grid">
+            <article class="third-file-plan">
+              <p class="card-kicker">EXACT CHANGE SURFACE</p>
+              <h3>파일별 구현 범위</h3>
+              <table>
+                <thead><tr><th>파일</th><th>변경</th><th>이유</th></tr></thead>
+                <tbody>
+                  <tr><td><code>nav/arena/reverse.py</code></td><td>작은 return-family 분기</td><td><code>trip&gt;=2</code> CargoFull과 natural completion을 west로 보냄</td></tr>
+                  <tr><td><code>nav/arena.sh</code></td><td>변수 1개 기본값</td><td><code>RG_REV_THIRD_GOAL_X=${RG_REV_THIRD_GOAL_X:-25}</code></td></tr>
+                  <tr><td><code>nav/return_to_goal.py</code></td><td><strong>알고리즘 변경 없음</strong></td><td>기존 <code>VIA_SOUTH=False</code>와 <code>_route_via()</code> 재사용</td></tr>
+                  <tr><td><code>frame_engine / ledger / cargo</code></td><td><strong>변경 없음</strong></td><td>2차 탐색 재개 동작과 한 개 수거 예외를 그대로 사용</td></tr>
+                </tbody>
+              </table>
+            </article>
+
+            <article class="third-pseudodiff">
+              <p class="card-kicker">PLANNED BRANCH · reverse.py</p>
+              <h3>코드 스타일을 유지하는 분기</h3>
+              <pre><code>third = TIME_TRIPS and matchclock.ENABLED and trip &gt;= 2
+after = os.environ.get("RG_RETURN_AFTER", "0")
+if third:
+    after = TRIP_RETURN_AFTER
+CARGO.arm(after if REARM else 0, f"reverse{trip}")
+
+try:
+    final_pose = _one_pass(...)   # 그대로
+except CARGO.CargoFull as full:
+    ok = _drive_refill_return(
+        ...,
+        via_south=not third,
+        west_goal_x=THIRD_GOAL_X if third else None,
+    )
+    if not ok:
+        break
+    if third:
+        break                     # 한 개 bank, 4차 없음
+    resume, why = _resume_after_refill(...)  # trip 1만</code></pre>
+              <p>같은 <code>third</code> 판정을 target 없이 <code>_one_pass()</code>가 자연 종료한 경로에도 적용합니다. 공용 helper는 <code>RTG.VIA_SOUTH</code>, <code>RTG.COL_MAX</code>, <code>RTG.GOAL_XY</code>를 저장하고 <code>try/finally</code>로 복원해 south 설정이 3차나 hard-return으로 새지 않게 합니다.</p>
+            </article>
+          </div>
+
+          <div class="third-knob-contract">
+            <div>
+              <p class="card-kicker">ENV CONTRACT</p>
+              <h3>기존 변수 네 개 + 새 좌표 하나</h3>
+            </div>
+            <dl>
+              <div><dt><code>RG_REV_TIME_TRIPS</code></dt><dd><strong>기존</strong><span><code>1</code> 3차 ON · <code>0</code> OFF</span></dd></div>
+              <div><dt><code>RG_MATCH_RETURN</code></dt><dd><strong>기존</strong><span><code>1</code>이어야 clock-gated 3차 가능</span></dd></div>
+              <div><dt><code>RG_REV_TRIP_RETURN_AFTER</code></dt><dd><strong>기존</strong><span><code>1</code> · 첫 수거 즉시 복귀</span></dd></div>
+              <div><dt><code>RG_REV_MAX_TIME_TRIPS</code></dt><dd><strong>기존</strong><span><code>2</code> · reverse + third까지만</span></dd></div>
+              <div><dt><code>RG_REV_THIRD_GOAL_X</code></dt><dd><strong class="is-new">NEW</strong><span><code>25cm</code> 시작 · west wall과 거리 증가</span></dd></div>
+            </dl>
+          </div>
+
+          <div class="third-command">
+            <span>PLANNED RUN</span>
+            <code id="cmd-third-plan">RG_REV_TIME_TRIPS=1 RG_MATCH_RETURN=1 RG_REV_TRIP_RETURN_AFTER=1 RG_REV_MAX_TIME_TRIPS=2 RG_REV_THIRD_GOAL_X=25 ./arena.sh run dodec pineapple_cube</code>
+            <button class="copy" data-copy="cmd-third-plan">복사</button>
+          </div>
+
+          <div class="third-test-grid">
+            <article><span>01</span><h3>OFF parity</h3><p><code>RG_REV_TIME_TRIPS=0</code>이면 현재 2차 종료와 byte-identical하게 3차를 시작하지 않아야 합니다.</p></article>
+            <article><span>02</span><h3>One-eat boundary</h3><p>non-target은 계속 통과하고 첫 target의 <code>CARGO.note 1/1</code> 직후 다음 station을 소비하지 않아야 합니다.</p></article>
+            <article><span>03</span><h3>Return family</h3><p>모든 phase 대표 pose에서 <code>cross-west</code>와 <code>descend-to-goal</code>이 있고 south-family leg는 없어야 합니다.</p></article>
+            <article><span>04</span><h3>Goal pile</h3><p>실제 적재물 좌표를 geometry에 넣고 <code>x=23/25/27</code>을 비교합니다. dry PASS만으로 현장 pile 안전을 단정하지 않습니다.</p></article>
+            <article><span>05</span><h3>Fallback</h3><p>target 없이 frontier가 끝나도 final pose에서 west 복귀하고, pose guard 실패 시 추측 주행 없이 정지합니다.</p></article>
+            <article><span>06</span><h3>No fourth trip</h3><p>3차 CargoFull 후에는 clock과 frontier가 남아도 무조건 종료하며 deposit-resume 로그가 없어야 합니다.</p></article>
+          </div>
+        </div>
+      </section>
+
       <section id="knobs" class="section shell" aria-labelledby="knobs-title">
         <div class="section-heading section-heading--row">
-          <div><p class="eyebrow">05 · TUNING SURFACE</p><h2 id="knobs-title">실제 런처에서 읽는 변수.</h2><p><code>nav/arena.sh</code>의 <code>run)</code> block이 live default의 기준입니다. 한 run에만 적용하려면 파일을 수정하지 말고 환경변수로 override합니다.</p></div>
+          <div><p class="eyebrow">06 · TUNING SURFACE</p><h2 id="knobs-title">실제 런처에서 읽는 변수.</h2><p><code>nav/arena.sh</code>의 <code>run)</code> block이 live default의 기준입니다. 한 run에만 적용하려면 파일을 수정하지 말고 환경변수로 override합니다.</p></div>
           <div class="filter-group" role="group" aria-label="변수 범주 필터">
             <button class="filter is-active" data-filter="all">All</button>
             <button class="filter" data-filter="motion">Motion</button>
@@ -448,7 +588,7 @@ RG_HALF_TURN_ONESHOT=1 \
       <section id="safety" class="section section--dark" aria-labelledby="safety-title">
         <div class="shell safety-layout">
           <div>
-            <p class="eyebrow eyebrow--light">06 · SAFETY &amp; DATA</p>
+            <p class="eyebrow eyebrow--light">07 · SAFETY &amp; DATA</p>
             <h2 id="safety-title">경고가 아니라,<br />실행 조건입니다.</h2>
           </div>
           <div class="safety-cards">
@@ -461,7 +601,7 @@ RG_HALF_TURN_ONESHOT=1 \
       </section>
 
       <section class="section shell" aria-labelledby="run-history-title">
-        <div class="section-heading"><p class="eyebrow">07 · LOCAL RUN ARCHIVE</p><h2 id="run-history-title">최근 보존 로그.</h2><p>Jetson에서 내려받은 로그 기준이며, 원격의 <code>/tmp</code>와 <code>/dev/shm</code> 출력은 영구 보관소가 아닙니다.</p></div>
+        <div class="section-heading"><p class="eyebrow">08 · LOCAL RUN ARCHIVE</p><h2 id="run-history-title">최근 보존 로그.</h2><p>Jetson에서 내려받은 로그 기준이며, 원격의 <code>/tmp</code>와 <code>/dev/shm</code> 출력은 영구 보관소가 아닙니다.</p></div>
         <div class="history-grid">
           <article><p class="card-kicker">2026-07-21 · 13:46 KST</p><h3><code>arena_run_044653</code></h3><p>약 194초 · 3 captured. Full output bundle: 3,745 files / 356MB preserved locally.</p><span class="status status--ok">ARCHIVED</span></article>
           <article><p class="card-kicker">2026-07-21 · 13:42 KST</p><h3><code>arena_run_044210</code></h3><p>약 211초 · 5 captured, 1 empty. Remote temporary frames expired during pull; log and partial artifact set are local.</p><span class="status status--warn">PARTIAL FRAMES</span></article>

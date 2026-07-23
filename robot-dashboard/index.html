@@ -16,6 +16,7 @@
           <a href="#runbook">Runbook</a>
           <a href="#architecture">Algorithm</a>
           <a href="#seq6r">Seq6r</a>
+          <a href="#return-map">Return map</a>
           <a href="#knobs">Knobs</a>
           <a href="#safety">Safety</a>
           <a href="https://github.com/junjinyong/snu-ai-robot-challenge-2026-team7" target="_blank" rel="noreferrer">Source ↗</a>
@@ -31,7 +32,7 @@
           <p class="hero__lead">Seq1 → Seq6 mecanum arena course의 실행 순서, 제어 구조, 튜닝 변수와 현장 주의사항을 한 곳에 모았습니다. 이 페이지는 명령을 복사할 뿐, 로봇을 직접 제어하지 않습니다.</p>
           <div class="source-line">
             <span>Source snapshot</span>
-            <code>Jetson snapshot · bb73ab0 · 2026-07-22</code>
+            <code>Jetson working tree · 466d48a · 2026-07-23</code>
           </div>
         </div>
         <aside class="hero-card" aria-label="현재 런타임 계약">
@@ -287,9 +288,94 @@ RG_HALF_TURN_ONESHOT=1 \
         </div>
       </section>
 
+      <section id="return-map" class="section return-map-section" aria-labelledby="return-map-title" data-return-map>
+        <div class="shell">
+          <div class="section-heading">
+            <p class="eyebrow">04 · SECOND RETURN / THIRD DEPARTURE</p>
+            <h2 id="return-map-title">종료 위치를 누르면,<br />goal까지의 경로가 보입니다.</h2>
+            <p>두 번째 탐색의 마지막 셀을 선택하면 현재 <code>VIA_SOUTH</code> 플래너가 사용하는 하강 열, south-wall 주행, 회전 지점을 경기장에 표시합니다. 점선은 세 번째 주행이 같은 기하 경로를 역순으로 빠져나오는 설계선입니다.</p>
+          </div>
+
+          <div class="return-map-status" role="note">
+            <span>CURRENT DEFAULTS</span>
+            <p><code>COL_MAX=325</code> · C1은 <code>x=75</code> · south lane <code>y=23</code> · goal <code>(17,17)</code> · <code>RG_HUG_INLINE=1</code></p>
+          </div>
+
+          <div class="return-map-layout">
+            <aside class="return-map-controls" aria-labelledby="return-cell-title">
+              <div class="return-map-controls__head">
+                <div>
+                  <p class="card-kicker">END CELL</p>
+                  <h3 id="return-cell-title">두 번째 탐색 종료 위치</h3>
+                </div>
+                <output id="return-selected-cell">R6C1</output>
+              </div>
+              <p class="return-map-help">경기장과 같은 방향입니다. 위가 북쪽(R6), 왼쪽이 서쪽(C1)입니다.</p>
+              <div id="return-cell-grid" class="return-cell-grid" role="grid" aria-label="두 번째 탐색 종료 셀 선택"></div>
+
+              <fieldset class="return-layer-controls">
+                <legend>표시 레이어</legend>
+                <label><input type="checkbox" data-route-layer="return" checked /> <span class="route-swatch route-swatch--return"></span>두 번째 복귀</label>
+                <label><input type="checkbox" data-route-layer="third" checked /> <span class="route-swatch route-swatch--third"></span>세 번째 역방향 출발</label>
+              </fieldset>
+
+              <div class="return-map-facts">
+                <div><span>선택 위치</span><strong id="return-start-coord">(50, 350)</strong></div>
+                <div><span>하강 통로</span><strong id="return-descent-lane">x = 75</strong></div>
+                <div><span>복귀 거리</span><strong id="return-distance">—</strong></div>
+              </div>
+              <p id="return-lane-reason" class="return-lane-reason"></p>
+            </aside>
+
+            <article class="return-arena-card">
+              <div class="return-arena-card__head">
+                <div>
+                  <p class="card-kicker">ARENA TRUE FRAME · CM</p>
+                  <h3><span id="return-map-cell-name">R6C1</span> → goal</h3>
+                </div>
+                <div class="return-legend" aria-label="경로 범례">
+                  <span><i class="legend-line legend-line--return"></i>Return</span>
+                  <span><i class="legend-line legend-line--third"></i>Trip 3 reverse</span>
+                  <span><i class="legend-turn"></i>Turn</span>
+                </div>
+              </div>
+              <div class="return-arena-wrap">
+                <svg id="return-arena-svg" class="return-arena" viewBox="0 0 500 500" role="img" aria-labelledby="return-arena-title return-arena-desc">
+                  <title id="return-arena-title">선택 위치에서 goal까지의 복귀 경로</title>
+                  <desc id="return-arena-desc">R6C1에서 C1과 C2 사이 통로로 이동한 뒤 남쪽 벽으로 내려오고 서쪽으로 회전해 goal로 진입하는 경로입니다.</desc>
+                </svg>
+              </div>
+              <p class="return-map-caveat">명목 셀 중심과 현재 기본값을 사용한 설계 시각화입니다. 실제 실행은 live pose, cube clearance, pose guard를 다시 검사하며 안전하지 않으면 경로를 중단합니다.</p>
+            </article>
+          </div>
+
+          <div class="return-instructions">
+            <article>
+              <div class="instruction-head">
+                <span class="route-badge route-badge--return">RETURN</span>
+                <div><p class="card-kicker">SECOND EXPLORATION → GOAL</p><h3>복귀 동작과 회전</h3></div>
+              </div>
+              <ol id="return-route-steps" class="route-step-list"></ol>
+            </article>
+            <article>
+              <div class="instruction-head">
+                <span class="route-badge route-badge--third">TRIP 3</span>
+                <div><p class="card-kicker">GOAL → SELECTED POSITION</p><h3>같은 경로의 역순</h3></div>
+              </div>
+              <ol id="third-route-steps" class="route-step-list"></ol>
+            </article>
+          </div>
+
+          <div class="return-mechanism-note">
+            <strong>회전 표기 기준</strong>
+            <p><code>mouth south</code>는 후진할 때 북쪽으로 이동하고, <code>mouth west</code>는 후진할 때 동쪽으로 이동합니다. 세 번째 경로는 위치 기하를 정확히 역순으로 표시하며, 마지막 상단 가로 구간은 복귀의 <code>to-column</code>을 반대로 수행하는 lateral strafe입니다.</p>
+          </div>
+        </div>
+      </section>
+
       <section id="knobs" class="section shell" aria-labelledby="knobs-title">
         <div class="section-heading section-heading--row">
-          <div><p class="eyebrow">04 · TUNING SURFACE</p><h2 id="knobs-title">실제 런처에서 읽는 변수.</h2><p><code>nav/arena.sh</code>의 <code>run)</code> block이 live default의 기준입니다. 한 run에만 적용하려면 파일을 수정하지 말고 환경변수로 override합니다.</p></div>
+          <div><p class="eyebrow">05 · TUNING SURFACE</p><h2 id="knobs-title">실제 런처에서 읽는 변수.</h2><p><code>nav/arena.sh</code>의 <code>run)</code> block이 live default의 기준입니다. 한 run에만 적용하려면 파일을 수정하지 말고 환경변수로 override합니다.</p></div>
           <div class="filter-group" role="group" aria-label="변수 범주 필터">
             <button class="filter is-active" data-filter="all">All</button>
             <button class="filter" data-filter="motion">Motion</button>
@@ -328,7 +414,7 @@ RG_HALF_TURN_ONESHOT=1 \
       <section id="safety" class="section section--dark" aria-labelledby="safety-title">
         <div class="shell safety-layout">
           <div>
-            <p class="eyebrow eyebrow--light">05 · SAFETY &amp; DATA</p>
+            <p class="eyebrow eyebrow--light">06 · SAFETY &amp; DATA</p>
             <h2 id="safety-title">경고가 아니라,<br />실행 조건입니다.</h2>
           </div>
           <div class="safety-cards">
@@ -341,7 +427,7 @@ RG_HALF_TURN_ONESHOT=1 \
       </section>
 
       <section class="section shell" aria-labelledby="run-history-title">
-        <div class="section-heading"><p class="eyebrow">06 · LOCAL RUN ARCHIVE</p><h2 id="run-history-title">최근 보존 로그.</h2><p>Jetson에서 내려받은 로그 기준이며, 원격의 <code>/tmp</code>와 <code>/dev/shm</code> 출력은 영구 보관소가 아닙니다.</p></div>
+        <div class="section-heading"><p class="eyebrow">07 · LOCAL RUN ARCHIVE</p><h2 id="run-history-title">최근 보존 로그.</h2><p>Jetson에서 내려받은 로그 기준이며, 원격의 <code>/tmp</code>와 <code>/dev/shm</code> 출력은 영구 보관소가 아닙니다.</p></div>
         <div class="history-grid">
           <article><p class="card-kicker">2026-07-21 · 13:46 KST</p><h3><code>arena_run_044653</code></h3><p>약 194초 · 3 captured. Full output bundle: 3,745 files / 356MB preserved locally.</p><span class="status status--ok">ARCHIVED</span></article>
           <article><p class="card-kicker">2026-07-21 · 13:42 KST</p><h3><code>arena_run_044210</code></h3><p>약 211초 · 5 captured, 1 empty. Remote temporary frames expired during pull; log and partial artifact set are local.</p><span class="status status--warn">PARTIAL FRAMES</span></article>

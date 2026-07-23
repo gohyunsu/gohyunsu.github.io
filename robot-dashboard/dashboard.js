@@ -90,7 +90,7 @@
     const SOUTH_LANE_Y = 23;
     const SOUTH_HUG_X = 160;
     const SOUTH_DOGLEG_Y = 60;
-    const SOUTH_TURN_MIN_X = 175;
+    const SOUTH_TURN_MIN_X = 75;
     const FRAME_LEAD = 74;
     const SECOND_GOAL = { x: 17, y: 15 };
     const SOUTH_GOAL = { x: 17, y: 17 };
@@ -341,7 +341,6 @@
       const turnX = Math.min(COL_MAX, Math.max(SOUTH_TURN_MIN_X, entry.x));
       const reversePoints = compactPoints([
         SOUTH_GOAL,
-        { x: SOUTH_HUG_X, y: SOUTH_LANE_Y },
         { x: turnX, y: SOUTH_LANE_Y }
       ]);
       const forwardPoints = [{ x: turnX, y: SOUTH_LANE_Y }];
@@ -578,13 +577,15 @@
         x1: mapX(route.descentX), y1: mapY(route.start.y), x2: mapX(route.descentX),
         y2: mapY(SOUTH_LANE_Y), class: "arena-lane-guide"
       }));
-      svg.appendChild(svgNode("line", {
-        x1: mapX(SOUTH_HUG_X), y1: mapY(7), x2: mapX(SOUTH_HUG_X),
-        y2: mapY(40), class: "hug-trigger"
-      }));
-      svg.appendChild(svgNode("text", {
-        x: mapX(SOUTH_HUG_X) + 5, y: mapY(38), class: "hug-label"
-      }, "inline hug x=160"));
+      if (explorationMode === "second") {
+        svg.appendChild(svgNode("line", {
+          x1: mapX(SOUTH_HUG_X), y1: mapY(7), x2: mapX(SOUTH_HUG_X),
+          y2: mapY(40), class: "hug-trigger"
+        }));
+        svg.appendChild(svgNode("text", {
+          x: mapX(SOUTH_HUG_X) + 5, y: mapY(38), class: "hug-label"
+        }, "inline hug x=160"));
+      }
 
       const annotationGroup = svgNode("g", { class: "route-annotations" });
       const bottomTurn = { x: route.descentX, y: SOUTH_LANE_Y };
@@ -753,7 +754,7 @@
         returnSteps.innerHTML = [
           stepItem(
             `goal에서 south wall을 후진 east → x=${route.thirdTurnX}`,
-            `mouth west 유지 · (${SOUTH_GOAL.x},${SOUTH_GOAL.y}) → inline hug (${SOUTH_HUG_X},${SOUTH_LANE_Y}) → (${route.thirdTurnX},${SOUTH_LANE_Y})`
+            `mouth west 유지 · (${SOUTH_GOAL.x},${SOUTH_GOAL.y}) → (${route.thirdTurnX},${SOUTH_LANE_Y}) 단일 eastbound leg · y=${SOUTH_GOAL.y}→${SOUTH_LANE_Y} inline 보정`
           ),
           stepItem("우회전(CW) +90° → mouth north", "남쪽 벽의 안전 회전점에서 방향 전환 · 이 지점부터 모든 이동은 전진"),
           ...(dogleg
@@ -875,7 +876,10 @@
         laneOutput.textContent = `(${route.frontierEntry.x}, ${route.frontierEntry.y})`;
         distanceLabel.textContent = "합류 이동";
         distanceOutput.textContent = `약 ${Math.round(route.thirdDistance)} cm`;
-        laneReason.textContent = `${route.unresolvedCells.length}개 미처리 중 traversal order상 가장 이른 ${frontierCells}을 포함한 ${frontierLabel}부터 재개합니다.`;
+        const boundaryDogleg = Math.abs(route.thirdTurnX - route.frontierEntry.x) > 0.1;
+        laneReason.textContent = boundaryDogleg
+          ? `${frontierLabel}의 lead-entry x=${route.frontierEntry.x}가 west/east 회전 안전 범위 밖이라 x=${route.thirdTurnX}에서 회전한 뒤 boundary dogleg만 수행합니다.`
+          : `${route.unresolvedCells.length}개 미처리 중 가장 이른 ${frontierLabel}을 선택하고, 회전 x=${route.thirdTurnX}를 lead-entry 열과 맞춰 ㄷ자 우회를 제거했습니다.`;
         mapHeading.replaceChildren(
           document.createTextNode(`3차 탐색 · ${frontierLabel} lead-entry로 전진 합류`)
         );
@@ -894,7 +898,7 @@
         secondaryKicker.textContent = "FRONTIER → REMAINING ROUTE";
         secondaryTitle.textContent = "frame_engine 재개와 1개 수거";
         noteTitle.textContent = "놓침 없는 3차 hand-off";
-        modeNote.innerHTML = `<code>target 확인·미수거</code>와 <code>판정 미확인</code>을 모두 unresolved로 합친 뒤, 전체 traversal order에서 가장 이른 <code>${frontierLabel}</code>을 선택합니다. south wall 구간만 후진하고 이후에는 lead-entry까지 전진합니다. ${frontierCells}부터 기존 <code>frame_engine</code>으로 다시 판정·수거하며, 새 target 1개를 먹으면 west-first → south 복귀를 적용합니다. Jetson에는 반영하지 않았습니다.`;
+        modeNote.innerHTML = `<code>target 확인·미수거</code>와 <code>판정 미확인</code>을 모두 unresolved로 합친 뒤, 전체 traversal order에서 가장 이른 <code>${frontierLabel}</code>을 선택합니다. south wall 후진 종료 x를 lead-entry 열에 직접 맞춰 불필요한 ㄷ자 dogleg를 만들지 않으며, 벽 회전 안전 범위 <code>x=75…325</code> 밖에서만 boundary 예외를 사용합니다. ${frontierCells}부터 기존 <code>frame_engine</code>으로 다시 판정·수거합니다. Jetson에는 반영하지 않았습니다.`;
         arenaDesc.textContent = `미처리 셀 중 가장 이른 ${frontierCells}의 ${frontierLabel} lead-entry까지 전진하고, frame_engine으로 남은 탐색을 이어가는 세 번째 탐색 설계입니다.`;
         }
       }

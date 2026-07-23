@@ -413,13 +413,136 @@ RG_HALF_TURN_ONESHOT=1 \
           <div class="section-heading">
             <p class="eyebrow">05 · THIRD EXPLORATION IMPLEMENTATION</p>
             <h2 id="third-plan-title">새 탐색기가 아니라,<br />기존 두 경로의 정확한 hand-off.</h2>
-            <p>3차 탐색 본체는 현재 <code>reverse.py</code>의 추가 trip이 이미 호출하는 <code>_one_pass() → trim_to_frontier() → frame_engine</code>을 그대로 사용합니다. 정상 종료 시 바꾸는 것은 <strong>trip 2의 첫 <code>CargoFull</code> 이후 return family</strong>뿐입니다.</p>
+            <p>3차 탐색 본체는 현재 <code>reverse.py</code>의 추가 trip이 이미 호출하는 <code>_one_pass() → trim_to_frontier() → frame_engine</code>을 그대로 사용합니다. 바꾸는 것은 <strong>trip 2가 끝났을 때의 return family</strong>뿐이며, 첫 <code>CargoFull</code>과 target 없는 natural completion에 같은 분기를 적용합니다.</p>
           </div>
 
           <div class="third-plan-status" role="note">
             <span>PLAN · JETSON NOT MODIFIED</span>
             <p><strong>탐색·판정·수거는 변경 없음.</strong> 2차 재개 상태기를 한 번 더 실행하고, 한 개를 먹으면 1차의 west-first <code>return_to_goal</code> 경로로 복귀합니다.</p>
           </div>
+
+          <section class="third-code-review" data-third-code-review aria-labelledby="third-code-review-title">
+            <div class="third-review-heading">
+              <div>
+                <p class="card-kicker">LIVE SOURCE → MINIMUM PATCH</p>
+                <h3 id="third-code-review-title">현재 젯슨 코드와 제안 코드의 실행 결과를 나란히 비교</h3>
+                <p><code>466d48a</code> working tree를 기준으로 합니다. 아래 <strong>CURRENT</strong>는 지금 Jetson에서 실제로 실행되는 분기이고, <strong>PROPOSED</strong>는 아직 반영하지 않은 최소 수정안입니다.</p>
+              </div>
+              <div class="third-review-source">
+                <span>READ-ONLY SNAPSHOT</span>
+                <code>nav/arena/reverse.py</code>
+                <code>nav/return_to_goal.py</code>
+                <code>nav/arena/frame_engine.py</code>
+                <code>nav/arena/cargo.py</code>
+              </div>
+            </div>
+
+            <div class="third-runtime-switches">
+              <fieldset>
+                <legend>코드 상태</legend>
+                <button class="is-active" type="button" data-third-implementation="current" aria-pressed="true"><span>CURRENT</span><small>현재 Jetson</small></button>
+                <button type="button" data-third-implementation="proposed" aria-pressed="false"><span>PROPOSED</span><small>최소 수정 후</small></button>
+              </fieldset>
+              <fieldset>
+                <legend>reverse.py 내부 trip</legend>
+                <button class="is-active" type="button" data-third-trip="1" aria-pressed="true"><span>trip 1</span><small>전체 2차 탐색</small></button>
+                <button type="button" data-third-trip="2" aria-pressed="false"><span>trip 2</span><small>전체 3차 탐색</small></button>
+              </fieldset>
+              <label class="third-goal-control" for="third-goal-x">
+                <span><code>RG_REV_THIRD_GOAL_X</code><output id="third-goal-x-output">25 cm</output></span>
+                <input id="third-goal-x" type="range" min="23" max="30" step="1" value="25" />
+                <small>제안된 trip 2 west 복귀에만 적용. 현장 pile 검증 전 확정값이 아닙니다.</small>
+              </label>
+            </div>
+
+            <div class="third-runtime-grid">
+              <article class="third-decision-card">
+                <div class="third-card-head">
+                  <div>
+                    <p class="card-kicker">RUNTIME DECISION</p>
+                    <h4 id="third-runtime-title">CURRENT · trip 1</h4>
+                  </div>
+                  <span id="third-runtime-badge" class="third-runtime-badge">LIVE</span>
+                </div>
+                <dl class="third-decision-list">
+                  <div><dt><code>third</code></dt><dd id="third-runtime-flag">false</dd></div>
+                  <div><dt><code>CARGO.LIMIT</code></dt><dd id="third-runtime-cargo">RG_RETURN_AFTER</dd></div>
+                  <div><dt>return family</dt><dd id="third-runtime-family">south</dd></div>
+                  <div><dt><code>RTG.VIA_SOUTH</code></dt><dd id="third-runtime-via">True</dd></div>
+                  <div><dt>final goal</dt><dd id="third-runtime-goal">(17, 17)</dd></div>
+                  <div><dt>수거 재시도</dt><dd id="third-runtime-retry">0회</dd></div>
+                </dl>
+                <p id="third-runtime-verdict" class="third-runtime-verdict">현재 trip 1은 collector가 찬 뒤 south wall로 내려가 서쪽으로 goal에 진입합니다.</p>
+              </article>
+
+              <article class="third-inline-card">
+                <div class="third-card-head">
+                  <div>
+                    <p class="card-kicker">INLINE CROSS-HOLD</p>
+                    <h4 id="third-inline-title">south family · run-west-to-goal</h4>
+                  </div>
+                  <span id="third-inline-status" class="third-inline-status">EXISTING</span>
+                </div>
+                <div class="third-inline-rail" aria-live="polite">
+                  <div class="third-inline-node"><span>ENTRY HOLD</span><strong id="third-inline-entry">y = 23</strong><small id="third-inline-entry-note">south lane</small></div>
+                  <i>→</i>
+                  <div class="third-inline-node third-inline-node--trigger"><span>ON_CROSS</span><strong id="third-inline-trigger">x ≤ 160</strong><small>정지 없이 callback</small></div>
+                  <i>→</i>
+                  <div class="third-inline-node third-inline-node--goal"><span>NEW HOLD</span><strong id="third-inline-new-hold">y = 17</strong><small id="third-inline-goal-note">SOUTH_GOAL_XY</small></div>
+                </div>
+                <p id="third-inline-explanation">south 복귀는 서쪽 주행 중 x=160을 지나면 held y를 23→17로 바꿉니다. 이것이 현재 trip 1과 trip 2 모두의 실제 동작입니다.</p>
+              </article>
+            </div>
+
+            <div class="third-capture-fact">
+              <div>
+                <span>CAPTURE REALITY</span>
+                <strong>여러 번 넣지 않음</strong>
+              </div>
+              <p><code>prepare_for_lunge()</code>의 반복은 <strong>수거 전 횡방향 정렬</strong>입니다. 실제 수거는 <code>eat_leg()</code> 한 번이며, collector를 채우는 eat만 <code>GEN_LUNGE_SEAT_EXTRA=4</code>로 4cm 더 깊게 들어갑니다. 이후 센서 확인 없이 <code>CARGO.note()</code>가 논리적으로 성공 처리하므로 실패 시 재시도하지 않습니다.</p>
+              <ol>
+                <li><span>1</span><strong>align</strong><small>필요 시 cross 보정</small></li>
+                <li><span>2</span><strong>seat +4cm</strong><small>1/1을 채우는 lunge</small></li>
+                <li><span>3</span><strong>eat_leg × 1</strong><small>실제 전진 수거 1회</small></li>
+                <li><span>4</span><strong>CARGO.note</strong><small>검증 없이 CargoFull</small></li>
+              </ol>
+            </div>
+
+            <div class="third-code-explorer">
+              <div class="third-code-explorer__head">
+                <div>
+                  <p class="card-kicker">CODE-LEVEL BEFORE / AFTER</p>
+                  <h4>수정 지점을 선택하면 실제 원문과 제안 diff를 표시합니다.</h4>
+                </div>
+                <div class="third-code-tabs" role="tablist" aria-label="3차 탐색 코드 변경 지점">
+                  <button class="is-active" type="button" role="tab" aria-selected="true" data-third-code-case="gate">01 · trip 판정</button>
+                  <button type="button" role="tab" aria-selected="false" data-third-code-case="helper">02 · return helper</button>
+                  <button type="button" role="tab" aria-selected="false" data-third-code-case="full">03 · CargoFull</button>
+                  <button type="button" role="tab" aria-selected="false" data-third-code-case="natural">04 · 자연 종료</button>
+                  <button type="button" role="tab" aria-selected="false" data-third-code-case="capture">05 · 수거</button>
+                </div>
+              </div>
+              <div class="third-code-context">
+                <code id="third-code-file">nav/arena/reverse.py · lines 189–192, 1021–1027</code>
+                <p id="third-code-summary">기존 trip≥2 한 개 수거 조건을 <code>third</code> boolean으로 이름 붙이고, third goal x만 새 환경변수로 추가합니다.</p>
+              </div>
+              <div class="third-code-diff">
+                <article>
+                  <header><span>BEFORE</span><strong>현재 Jetson</strong></header>
+                  <pre><code id="third-code-before"></code></pre>
+                </article>
+                <article class="third-code-diff__after">
+                  <header><span>AFTER</span><strong>제안 · 미적용</strong></header>
+                  <pre><code id="third-code-after"></code></pre>
+                </article>
+              </div>
+              <div class="third-change-boundary">
+                <div><span>수정</span><p id="third-code-change">reverse.py에 third 판정과 새 상수만 추가합니다.</p></div>
+                <div><span>유지</span><p id="third-code-keep">_one_pass(), frame_engine, ledger, 물체 판정은 바꾸지 않습니다.</p></div>
+                <div><span>검증</span><p id="third-code-test">trip 1 결과가 현재 코드와 동일한지 OFF parity를 검사합니다.</p></div>
+              </div>
+            </div>
+          </section>
 
           <div class="third-state-flow" aria-label="3차 탐색 상태 전이">
             <article class="third-flow-node is-existing"><span>01 · EXISTING</span><strong>2차 south 복귀</strong><small>trip 1의 기존 <code>_drive_refill_return()</code></small></article>

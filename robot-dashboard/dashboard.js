@@ -82,6 +82,337 @@
     });
   });
 
+  const thirdReview = document.querySelector("[data-third-code-review]");
+  if (thirdReview) {
+    const implementationButtons = Array.from(thirdReview.querySelectorAll("[data-third-implementation]"));
+    const tripButtons = Array.from(thirdReview.querySelectorAll("[data-third-trip]"));
+    const codeButtons = Array.from(thirdReview.querySelectorAll("[data-third-code-case]"));
+    const goalInput = document.getElementById("third-goal-x");
+    const goalOutput = document.getElementById("third-goal-x-output");
+    const runtimeTitle = document.getElementById("third-runtime-title");
+    const runtimeBadge = document.getElementById("third-runtime-badge");
+    const runtimeFlag = document.getElementById("third-runtime-flag");
+    const runtimeCargo = document.getElementById("third-runtime-cargo");
+    const runtimeFamily = document.getElementById("third-runtime-family");
+    const runtimeVia = document.getElementById("third-runtime-via");
+    const runtimeGoal = document.getElementById("third-runtime-goal");
+    const runtimeRetry = document.getElementById("third-runtime-retry");
+    const runtimeVerdict = document.getElementById("third-runtime-verdict");
+    const inlineTitle = document.getElementById("third-inline-title");
+    const inlineStatus = document.getElementById("third-inline-status");
+    const inlineEntry = document.getElementById("third-inline-entry");
+    const inlineEntryNote = document.getElementById("third-inline-entry-note");
+    const inlineTrigger = document.getElementById("third-inline-trigger");
+    const inlineNewHold = document.getElementById("third-inline-new-hold");
+    const inlineGoalNote = document.getElementById("third-inline-goal-note");
+    const inlineExplanation = document.getElementById("third-inline-explanation");
+    const codeFile = document.getElementById("third-code-file");
+    const codeSummary = document.getElementById("third-code-summary");
+    const codeBefore = document.getElementById("third-code-before");
+    const codeAfter = document.getElementById("third-code-after");
+    const codeChange = document.getElementById("third-code-change");
+    const codeKeep = document.getElementById("third-code-keep");
+    const codeTest = document.getElementById("third-code-test");
+    let implementation = "current";
+    let trip = 1;
+
+    const codeCases = {
+      gate: {
+        file: "nav/arena/reverse.py · lines 189–192, 1021–1027",
+        summary: "기존 trip≥2 한 개 수거 조건을 third boolean으로 이름 붙이고, third goal x만 새 환경변수로 추가합니다.",
+        before: `TRIP_RETURN_AFTER = int(
+    os.environ.get("RG_REV_TRIP_RETURN_AFTER", "1") or 1
+)
+
+# ... run() loop ...
+trip += 1
+after = os.environ.get("RG_RETURN_AFTER", "0")
+if TIME_TRIPS and matchclock.ENABLED and trip >= 2:
+    after = TRIP_RETURN_AFTER
+CARGO.arm(after if REARM else 0, f"reverse{trip}")`,
+        after: `TRIP_RETURN_AFTER = int(
+    os.environ.get("RG_REV_TRIP_RETURN_AFTER", "1") or 1
+)
++ THIRD_GOAL_X = float(
++     os.environ.get("RG_REV_THIRD_GOAL_X", "25") or 25
++ )
+
+# ... run() loop ...
+trip += 1
++ third = TIME_TRIPS and matchclock.ENABLED and trip >= 2
+after = os.environ.get("RG_RETURN_AFTER", "0")
+- if TIME_TRIPS and matchclock.ENABLED and trip >= 2:
++ if third:
+    after = TRIP_RETURN_AFTER
+CARGO.arm(after if REARM else 0, f"reverse{trip}")`,
+        change: "reverse.py 상수 1개와 loop-local third boolean 1개를 추가합니다.",
+        keep: "기존 clock gate와 CARGO.arm(1)의 의미는 그대로입니다.",
+        test: "trip 1에서 third=false, trip 2에서만 third=true인지 dry log로 확인합니다."
+      },
+      helper: {
+        file: "nav/arena/reverse.py · lines 878–912",
+        summary: "현재 south로 고정된 helper에 return family와 third goal x를 인자로 주고, RTG 전역값을 호출 범위 안에서만 바꿉니다.",
+        before: `def _drive_refill_return(E, loc, car, speed_dirs,
+                         rot_dirs, cel, full, p):
+    # ... stationary + 25cm pose guard unchanged ...
+
+    RTG.N_CARGO = full.n
+    RTG.VIA_SOUTH = True
+    RTG.COL_MAX = RETURN_COL_MAX
+    RTG.run(loc, car, speed_dirs, rot_dirs, here)
+    return True`,
+        after: `def _drive_refill_return(E, loc, car, speed_dirs,
+                         rot_dirs, cel, full, p, *,
+                         via_south=True, west_goal_x=None):
+    # ... stationary + 25cm pose guard unchanged ...
+
++   saved = (RTG.VIA_SOUTH, RTG.COL_MAX, RTG.GOAL_XY)
++   try:
+        RTG.N_CARGO = full.n
+-       RTG.VIA_SOUTH = True
+-       RTG.COL_MAX = RETURN_COL_MAX
++       RTG.VIA_SOUTH = via_south
++       RTG.COL_MAX = RETURN_COL_MAX if via_south else None
++       if west_goal_x is not None:
++           RTG.GOAL_XY = (west_goal_x, RTG.GOAL_Y)
+        RTG.run(loc, car, speed_dirs, rot_dirs, here)
++   finally:
++       RTG.VIA_SOUTH, RTG.COL_MAX, RTG.GOAL_XY = saved
+    return True`,
+        change: "helper 인자 2개와 RTG 설정의 try/finally scope를 추가합니다.",
+        keep: "stationary pose, eaten-cell nominal 25cm guard, RTG.run()은 그대로 둡니다.",
+        test: "예외가 발생해도 VIA_SOUTH·COL_MAX·GOAL_XY가 원래 값으로 복원되는지 검사합니다."
+      },
+      full: {
+        file: "nav/arena/reverse.py · lines 1072–1091",
+        summary: "현재 trip 2도 무조건 south helper를 호출합니다. 제안안은 trip 2에서만 west를 넘기고 복귀 직후 종료합니다.",
+        before: `except CARGO.CargoFull as full:
+    if TIME_TRIPS:
+        if args.dry:
+            p("(dry) would drive ... via south")
+        elif not _drive_refill_return(
+            E, loc, car, speed_dirs, rot_dirs, cel, full, p
+        ):
+            break
+
+        resume, why = _resume_after_refill(
+            trip, args.dry, route
+        )
+        if resume:
+            continue
+        break`,
+        after: `except CARGO.CargoFull as full:
+    if TIME_TRIPS:
+        if args.dry:
++           family = "west" if third else "south"
++           p(f"(dry) would drive ... via {family}")
+        elif not _drive_refill_return(
+            E, loc, car, speed_dirs, rot_dirs, cel, full, p,
++           via_south=not third,
++           west_goal_x=THIRD_GOAL_X if third else None,
+        ):
+            break
+
++       if third:
++           p("third traverse banked one cube; stopping")
++           break
+        resume, why = _resume_after_refill(
+            trip, args.dry, route
+        )
+        if resume:
+            continue
+        break`,
+        change: "CargoFull helper 호출에 trip별 family를 전달하고 third는 즉시 break합니다.",
+        keep: "trip 1의 return→clock/frontier 판단→deposit/resume 순서는 유지됩니다.",
+        test: "trip 2 log에 via west가 찍히고 _resume_after_refill 호출이 없는지 확인합니다."
+      },
+      natural: {
+        file: "nav/arena/reverse.py · lines 1031–1070",
+        summary: "target 없이 frontier가 끝나는 경로도 현재는 south 고정입니다. 동일한 third 판정을 적용해야 마지막 경로만 다르게 움직이는 불일치를 막습니다.",
+        before: `# _one_pass() natural completion
+import return_to_goal as RTG
+RTG.N_CARGO = CARGO.N
+RTG.VIA_SOUTH = True
+RTG.COL_MAX = RETURN_COL_MAX
+
+# dry: RTG.plan_route / RTG.print_plan
+# live: stationary + 25cm receipt guard
+end = RTG.run(loc, car, speed_dirs, rot_dirs, here)
+break`,
+        after: `# _one_pass() natural completion
+import return_to_goal as RTG
++ saved = (RTG.VIA_SOUTH, RTG.COL_MAX, RTG.GOAL_XY)
++ try:
+    RTG.N_CARGO = CARGO.N
+-   RTG.VIA_SOUTH = True
+-   RTG.COL_MAX = RETURN_COL_MAX
++   RTG.VIA_SOUTH = not third
++   RTG.COL_MAX = RETURN_COL_MAX if not third else None
++   if third:
++       RTG.GOAL_XY = (THIRD_GOAL_X, RTG.GOAL_Y)
+
+    # existing dry plan OR live stationary/25cm guard
+    end = RTG.run(loc, car, speed_dirs, rot_dirs, here)
++ finally:
++   RTG.VIA_SOUTH, RTG.COL_MAX, RTG.GOAL_XY = saved
+break`,
+        change: "자연 종료의 planner 설정에도 CargoFull과 동일한 third 분기를 적용합니다.",
+        keep: "dry plan 출력, live stationary read와 final receipt 25cm guard를 유지합니다.",
+        test: "target 0개로 끝난 trip 2도 west route를 만들고 goal에서 종료하는지 확인합니다."
+      },
+      capture: {
+        file: "nav/arena/frame_engine.py · lines 852–871, 920–927 / cargo.py · lines 83–103",
+        summary: "3차 복귀 패치에서 수거 primitive는 바꾸지 않습니다. 현재 코드에는 실제 탑재 확인이나 재수거 loop가 없습니다.",
+        before: `target = fr.lunge_pt(side_label, swept_label)
+target = _seat_deepen(
+    target, fr.cardinal, fr, side_label, swept_label
+)
+pose = prepare_for_lunge(
+    fr, target, fr.cardinal, pose, label
+)
+pose = eat_leg(fr, target, fr.cardinal, f"lunge {label}", pose)
+log_eat_final(target, fr.cardinal, pose, label)
+
+# station state machine, after bookkeeping
+CARGO.note(fr.key(first, stop_label))
+# LIMIT=1 -> raises CargoFull immediately`,
+        after: `# UNCHANGED by the third-return patch
+target = fr.lunge_pt(side_label, swept_label)
+target = _seat_deepen(       # filling eat: +4cm once
+    target, fr.cardinal, fr, side_label, swept_label
+)
+pose = prepare_for_lunge(    # alignment retry, NOT eat retry
+    fr, target, fr.cardinal, pose, label
+)
+pose = eat_leg(fr, target, fr.cardinal, f"lunge {label}", pose)
+log_eat_final(target, fr.cardinal, pose, label)  # pose log only
+
+CARGO.note(fr.key(first, stop_label))  # sensor check 없음
+# LIMIT=1 -> assumes aboard and raises CargoFull`,
+        change: "변경하지 않습니다. return-family 수정에 capture retry를 섞지 않습니다.",
+        keep: "세 수거 경로 모두 filling eat의 GEN_LUNGE_SEAT_EXTRA=4를 계속 사용합니다.",
+        test: "로그에서 [seat] +4cm, eat_leg 1회, CARGO.note 1/1 순서를 확인합니다."
+      }
+    };
+
+    function selectButton(buttons, activeButton) {
+      buttons.forEach((button) => {
+        const active = button === activeButton;
+        button.classList.toggle("is-active", active);
+        button.setAttribute("aria-pressed", String(active));
+        if (button.hasAttribute("role")) button.setAttribute("aria-selected", String(active));
+      });
+    }
+
+    function updateThirdRuntime() {
+      const proposed = implementation === "proposed";
+      const third = trip >= 2;
+      const west = proposed && third;
+      const goalX = Number(goalInput.value);
+      goalOutput.textContent = `${goalX} cm`;
+      goalInput.disabled = !west;
+      goalInput.closest(".third-goal-control").classList.toggle("is-disabled", !west);
+
+      runtimeTitle.textContent = `${proposed ? "PROPOSED" : "CURRENT"} · trip ${trip}`;
+      runtimeBadge.textContent = proposed ? "PATCH" : "LIVE";
+      runtimeBadge.classList.toggle("is-proposed", proposed);
+      runtimeFlag.textContent = String(third);
+      runtimeCargo.textContent = third ? "1" : "RG_RETURN_AFTER (3)";
+      runtimeFamily.textContent = west ? "west" : "south";
+      runtimeVia.textContent = west ? "False" : "True";
+      runtimeGoal.textContent = west ? `(${goalX}, 15)` : "(17, 17)";
+      runtimeRetry.textContent = "0회 · seat +4cm 1회";
+      runtimeVerdict.classList.toggle("is-proposed", west);
+
+      if (west) {
+        runtimeVerdict.textContent = `제안 코드의 trip 2는 한 개를 먹은 위치에서 west family를 선택하고 (${goalX}, 15)에서 종료합니다. 4차 trip은 시작하지 않습니다.`;
+      } else if (third) {
+        runtimeVerdict.textContent = "현재 trip 2는 CARGO.LIMIT=1까지는 적용되지만 _drive_refill_return()이 VIA_SOUTH=True로 고정되어 있어, 한 개 수거 뒤에도 south family로 복귀합니다.";
+      } else {
+        runtimeVerdict.textContent = proposed
+          ? "제안 코드에서도 trip 1은 현재와 동일하게 south family로 복귀한 뒤 clock/frontier gate가 허용할 때만 trip 2를 시작합니다."
+          : "현재 trip 1은 collector가 찬 뒤 south wall로 내려가 서쪽으로 goal에 진입합니다.";
+      }
+
+      inlineStatus.textContent = west ? "PROPOSED" : "EXISTING";
+      inlineStatus.classList.toggle("is-proposed", west);
+      if (west) {
+        inlineTitle.textContent = "west family · descend-to-goal";
+        inlineEntry.textContent = "x = 23";
+        inlineEntryNote.textContent = "west lane";
+        inlineTrigger.textContent = "y ≤ 160";
+        inlineNewHold.textContent = `x = ${goalX}`;
+        inlineGoalNote.textContent = "third GOAL_XY.x";
+        inlineExplanation.textContent = `남하하는 단일 leg 안에서 y=160을 지날 때 held x가 23→${goalX}로 바뀝니다. ${goalX}는 벽 쪽 hug가 아니라 기존 goal pile에서 동쪽으로 간격을 두는 inline goal-lane shift입니다.`;
+      } else {
+        inlineTitle.textContent = "south family · run-west-to-goal";
+        inlineEntry.textContent = "y = 23";
+        inlineEntryNote.textContent = "south lane";
+        inlineTrigger.textContent = "x ≤ 160";
+        inlineNewHold.textContent = "y = 17";
+        inlineGoalNote.textContent = "SOUTH_GOAL_XY";
+        inlineExplanation.textContent = `south 복귀는 서쪽 주행 중 x=160을 지나면 held y를 23→17로 바꿉니다. 이것이 ${third ? "현재 trip 2" : "trip 1"}의 실제 동작입니다.`;
+      }
+    }
+
+    function updateCodeCase(name) {
+      const item = codeCases[name];
+      codeFile.textContent = item.file;
+      codeSummary.textContent = item.summary;
+      codeBefore.textContent = item.before;
+      codeAfter.textContent = item.after;
+      codeChange.textContent = item.change;
+      codeKeep.textContent = item.keep;
+      codeTest.textContent = item.test;
+    }
+
+    const thirdParams = new URLSearchParams(window.location.search);
+    const requestedImplementation = thirdParams.get("thirdCode");
+    const requestedTrip = Number(thirdParams.get("trip"));
+    const requestedGoalX = Number(thirdParams.get("goalX"));
+    const requestedDiff = thirdParams.get("diff");
+    if (requestedImplementation === "current" || requestedImplementation === "proposed") {
+      implementation = requestedImplementation;
+    }
+    if (requestedTrip === 1 || requestedTrip === 2) trip = requestedTrip;
+    if (Number.isFinite(requestedGoalX) && requestedGoalX >= 23 && requestedGoalX <= 30) {
+      goalInput.value = String(requestedGoalX);
+    }
+    const implementationButton = implementationButtons.find(
+      (button) => button.dataset.thirdImplementation === implementation
+    );
+    const tripButton = tripButtons.find((button) => Number(button.dataset.thirdTrip) === trip);
+    const codeButton = codeButtons.find((button) => button.dataset.thirdCodeCase === requestedDiff)
+      || codeButtons[0];
+    selectButton(implementationButtons, implementationButton);
+    selectButton(tripButtons, tripButton);
+    selectButton(codeButtons, codeButton);
+
+    implementationButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        implementation = button.dataset.thirdImplementation;
+        selectButton(implementationButtons, button);
+        updateThirdRuntime();
+      });
+    });
+    tripButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        trip = Number(button.dataset.thirdTrip);
+        selectButton(tripButtons, button);
+        updateThirdRuntime();
+      });
+    });
+    codeButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        selectButton(codeButtons, button);
+        updateCodeCase(button.dataset.thirdCodeCase);
+      });
+    });
+    goalInput.addEventListener("input", updateThirdRuntime);
+    updateThirdRuntime();
+    updateCodeCase(codeButton.dataset.thirdCodeCase);
+  }
+
   const returnMap = document.querySelector("[data-return-map]");
   if (returnMap) {
     const SVG_NS = "http://www.w3.org/2000/svg";

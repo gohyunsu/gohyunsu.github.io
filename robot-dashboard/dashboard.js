@@ -731,7 +731,7 @@
       } else {
         if (!route.frontier) {
           returnSteps.innerHTML = [
-            stepItem("미처리 셀 없음", "target 미수거와 판정 미확인 셀이 모두 0개이므로 3차 출발 경로를 만들지 않음"),
+            stepItem("미처리 셀 없음", "target 미수거와 판정 미확정·미보존 셀이 모두 0개이므로 3차 출발 경로를 만들지 않음"),
             stepItem("goal에서 대기", "2차 ledger가 전체 resolved이면 south goal pose를 유지")
           ].join("");
           thirdSteps.innerHTML = [
@@ -781,7 +781,7 @@
           ),
           stepItem(
             `${frontierLabel}에서 공용 판정 재개`,
-            `${frontierCells} 처리부터 시작 · target 미수거와 판정 미확인을 모두 unresolved로 취급`
+            `${frontierCells} 처리부터 시작 · target 미수거와 판정 미확정·미보존을 모두 unresolved로 취급`
           ),
           phaseStep(route.frontier.phase, route.frontier.phase, `${route.frontier.station}부터`, "이후 남은 station과 phase를 동일 상태기로 처리"),
           ...PHASES.slice(route.frontier.phaseIndex + 1).map((phase) => phaseStep(phase, null)),
@@ -800,7 +800,7 @@
       startCoord.textContent = `(${route.start.x}, ${route.start.y})`;
       const missedCount = route.unresolvedCells.filter((cell) => cell.status === "missed").length;
       const unknownCount = route.unresolvedCells.filter((cell) => cell.status === "unknown").length;
-      unresolvedOutput.textContent = `${route.unresolvedCells.length} · target ${missedCount} / 미확인 ${unknownCount}`;
+      unresolvedOutput.textContent = `${route.unresolvedCells.length} · target ${missedCount} / 미보존 ${unknownCount}`;
       if (explorationMode === "second") {
         phaseLabel.textContent = "현재 phase";
         phaseOutput.textContent = `${route.phase.name} · h${route.phase.heading >= 0 ? "+" : ""}${route.phase.heading}°`;
@@ -834,8 +834,8 @@
         secondaryKicker.textContent = "SELECTED CELL → GOAL";
         secondaryTitle.textContent = "south 복귀와 회전";
         noteTitle.textContent = "2차 전체 경로";
-        modeNote.innerHTML = `회색 phase spine은 <code>Seq6r→Seq2r</code> 전체 경로, 굵은 남색은 ${label}까지 실제 진행한 prefix입니다. 현재 상태표에는 target 확인·미수거 ${missedCount}개와 판정 미확인 ${unknownCount}개가 남아 있으며 둘 다 3차 미처리 영역으로 전달됩니다.`;
-        arenaDesc.textContent = `goal에서 ${label}까지 이어지는 두 번째 탐색과 south 복귀 경로, 그리고 처리 완료·target 미수거·판정 미확인 셀 상태입니다.`;
+        modeNote.innerHTML = `회색 phase spine은 <code>Seq6r→Seq2r</code> 전체 경로, 굵은 남색은 ${label}까지 실제 진행한 prefix입니다. 현재 상태표에는 target 확인·미수거 ${missedCount}개와 판정 미확정·미보존 ${unknownCount}개가 남아 있으며 둘 다 3차 미처리 영역으로 전달됩니다.`;
+        arenaDesc.textContent = `goal에서 ${label}까지 이어지는 두 번째 탐색과 south 복귀 경로, 그리고 처리 완료·target 미수거·판정 미확정 또는 미보존 셀 상태입니다.`;
       } else {
         statusLabel.textContent = "PROPOSED · NOT IN JETSON YET";
         returnMap.querySelector(".return-map-status").classList.add("is-proposed");
@@ -846,7 +846,7 @@
           laneOutput.textContent = "출발 안 함";
           distanceLabel.textContent = "합류 이동";
           distanceOutput.textContent = "0 cm";
-          laneReason.textContent = "target 미수거와 판정 미확인 셀이 없습니다. 3차 탐색을 시작하지 않고 goal에서 종료합니다.";
+          laneReason.textContent = "target 미수거와 판정 미확정·미보존 셀이 없습니다. 3차 탐색을 시작하지 않고 goal에서 종료합니다.";
           mapHeading.replaceChildren(document.createTextNode("3차 탐색 · 미처리 영역 없음"));
           statusText.innerHTML = "<code>3차</code>: 전체 2차 ledger가 resolved이므로 출발 경로와 frame_engine 재개가 필요하지 않음";
           legendActiveLine.className = "legend-line legend-line--third";
@@ -863,7 +863,7 @@
           secondaryKicker.textContent = "LEDGER COMPLETE";
           secondaryTitle.textContent = "goal에서 종료";
           noteTitle.textContent = "출발 조건";
-          modeNote.innerHTML = "3차 탐색은 <code>target 확인·미수거</code> 또는 <code>판정 미확인</code> 셀이 하나 이상 있을 때만 시작합니다. 현재는 모든 셀이 처리 완료입니다. Jetson에는 반영하지 않았습니다.";
+          modeNote.innerHTML = "3차 탐색은 <code>target 확인·미수거</code> 또는 <code>판정 미확정·미보존</code> 셀이 하나 이상 있을 때만 시작합니다. 현재는 모든 셀이 처리 완료입니다. Jetson에는 반영하지 않았습니다.";
           arenaDesc.textContent = "모든 셀이 처리 완료되어 세 번째 탐색 출발 경로가 없는 상태입니다.";
         } else {
         const frontierLabel = `${route.frontier.phase.name} ${route.frontier.station}`;
@@ -898,7 +898,7 @@
         secondaryKicker.textContent = "FRONTIER → REMAINING ROUTE";
         secondaryTitle.textContent = "frame_engine 재개와 1개 수거";
         noteTitle.textContent = "놓침 없는 3차 hand-off";
-        modeNote.innerHTML = `<code>target 확인·미수거</code>와 <code>판정 미확인</code>을 모두 unresolved로 합친 뒤, 전체 traversal order에서 가장 이른 <code>${frontierLabel}</code>을 선택합니다. south wall 후진 종료 x를 lead-entry 열에 직접 맞춰 불필요한 ㄷ자 dogleg를 만들지 않으며, 벽 회전 안전 범위 <code>x=75…325</code> 밖에서만 boundary 예외를 사용합니다. ${frontierCells}부터 기존 <code>frame_engine</code>으로 다시 판정·수거합니다. Jetson에는 반영하지 않았습니다.`;
+        modeNote.innerHTML = `<code>target 확인·미수거</code>와 <code>판정 미확정·미보존</code>을 모두 unresolved로 합친 뒤, 전체 traversal order에서 가장 이른 <code>${frontierLabel}</code>을 선택합니다. 제안 경로가 구현되면 south wall 후진 종료 x를 lead-entry 열에 직접 맞춰 불필요한 ㄷ자 dogleg 없이 합류하고, ${frontierCells}부터 기존 <code>frame_engine</code> 상태기로 계속 진행합니다. 현재 Jetson 소스는 direct frontier가 아니라 <code>goto_first_lane()</code>으로 Seq6r entry부터 다시 시작합니다.`;
         arenaDesc.textContent = `미처리 셀 중 가장 이른 ${frontierCells}의 ${frontierLabel} lead-entry까지 전진하고, frame_engine으로 남은 탐색을 이어가는 세 번째 탐색 설계입니다.`;
         }
       }
@@ -916,7 +916,7 @@
           const statusTextValue = {
             resolved: "처리 완료",
             missed: "target 확인·미수거",
-            unknown: "판정 미확인"
+            unknown: "판정 미확정·미보존"
           }[status];
           button.setAttribute(
             "aria-label",

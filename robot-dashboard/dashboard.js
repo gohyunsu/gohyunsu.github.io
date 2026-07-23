@@ -98,11 +98,11 @@
     const descentByRegularColumn = [75, 75, 125, 175, 225, 275, 325];
     const descentByFrontRow = [75, 100, 150, 200, 250, 300, 325];
     const PHASES = [
-      { name: "Seq6r", heading: 90, chan: 125.6, axis: "x", stations: ["C1", "C2", "C3", "C4", "C5", "C6"], entry: { x: 17, y: 125.6 }, exit: { x: 278.8, y: 125.6 } },
-      { name: "Seq5r", heading: 0, chan: 278.8, axis: "y", stations: ["R3", "R4"], entry: { x: 278.8, y: 125.6 }, exit: { x: 278.8, y: 227.4 } },
-      { name: "Seq4r", heading: -90, chan: 227.4, axis: "x", stations: ["C4", "C3", "C2", "C1"], entry: { x: 278.8, y: 227.4 }, exit: { x: 74.95, y: 227.4 } },
-      { name: "Seq3r", heading: 0, chan: 74.95, axis: "y", stations: ["R5", "R6"], entry: { x: 74.95, y: 227.4 }, exit: { x: 74.95, y: 329.8 } },
-      { name: "Seq2r", heading: 90, chan: 329.8, axis: "x", stations: ["C3", "C4", "C5", "C6", "C7"], entry: { x: 74.95, y: 329.8 }, exit: { x: 377, y: 329.8 } }
+      { name: "Seq6r", heading: 90, chan: 125.6, axis: "x", pair: [1, 2], stations: ["C1", "C2", "C3", "C4", "C5", "C6"], entry: { x: 17, y: 125.6 }, exit: { x: 278.8, y: 125.6 } },
+      { name: "Seq5r", heading: 0, chan: 278.8, axis: "y", pair: [5, 6], stations: ["R3", "R4"], entry: { x: 278.8, y: 125.6 }, exit: { x: 278.8, y: 227.4 } },
+      { name: "Seq4r", heading: -90, chan: 227.4, axis: "x", pair: [3, 4], stations: ["C4", "C3", "C2", "C1"], entry: { x: 278.8, y: 227.4 }, exit: { x: 74.95, y: 227.4 } },
+      { name: "Seq3r", heading: 0, chan: 74.95, axis: "y", pair: [1, 2], stations: ["R5", "R6"], entry: { x: 74.95, y: 227.4 }, exit: { x: 74.95, y: 329.8 } },
+      { name: "Seq2r", heading: 90, chan: 329.8, axis: "x", pair: [5, 6], stations: ["C3", "C4", "C5", "C6", "C7"], entry: { x: 74.95, y: 329.8 }, exit: { x: 377, y: 329.8 } }
     ];
     const SECOND_SPINE = [SECOND_GOAL, PHASES[0].entry, ...PHASES.map((phase) => phase.exit)];
     const SEARCH_TURNS = [
@@ -118,6 +118,14 @@
       R4C1: 0,
       R6C2: 90
     };
+    const STATION_ORDER = PHASES.flatMap((phase, phaseIndex) =>
+      phase.stations.map((station) => ({
+        phase: { ...phase, index: phaseIndex },
+        phaseIndex,
+        station,
+        cells: stationCells(phase, station)
+      }))
+    );
 
     const grid = document.getElementById("return-cell-grid");
     const svg = document.getElementById("return-arena-svg");
@@ -130,6 +138,7 @@
     const laneOutput = document.getElementById("return-descent-lane");
     const distanceLabel = document.getElementById("return-distance-label");
     const distanceOutput = document.getElementById("return-distance");
+    const unresolvedOutput = document.getElementById("return-unresolved-count");
     const laneReason = document.getElementById("return-lane-reason");
     const returnSteps = document.getElementById("return-route-steps");
     const thirdSteps = document.getElementById("third-route-steps");
@@ -151,8 +160,11 @@
     const secondaryTitle = document.getElementById("route-secondary-title");
     const noteTitle = document.getElementById("route-note-title");
     const modeNote = document.getElementById("route-mode-note");
+    const cellToolButtons = Array.from(document.querySelectorAll("[data-cell-tool]"));
+    const cellOverrides = new Map();
     let selected = { row: 6, col: 1 };
     let explorationMode = "second";
+    let cellTool = "end";
     const routeParams = new URLSearchParams(window.location.search);
     const requestedMode = routeParams.get("exploration");
     if (requestedMode === "second" || requestedMode === "third") {
@@ -165,6 +177,17 @@
       const col = Number(requestedCell[2]);
       if (!(col === 7 && row <= 4)) selected = { row, col };
     }
+    ["resolved", "missed", "unknown"].forEach((status) => {
+      const requested = (routeParams.get(status) || "").split(",").filter(Boolean);
+      requested.forEach((value) => {
+        const match = /^R([1-6])C([1-7])$/i.exec(value);
+        if (!match) return;
+        const row = Number(match[1]);
+        const col = Number(match[2]);
+        if (col === 7 && row <= 4) return;
+        cellOverrides.set(cellKey(row, col), status);
+      });
+    });
 
     function svgNode(tag, attributes = {}, textValue = "") {
       const node = document.createElementNS(SVG_NS, tag);
@@ -240,32 +263,59 @@
       return route.phase.axis === "x" ? `C${route.col}` : `R${route.row}`;
     }
 
-    function nextFrontierFor(route) {
+    function cellKey(row, col) {
+      return `R${row}C${col}`;
+    }
+
+    function stationCells(phase, station) {
+      const stationNumber = Number(station.slice(1));
+      return phase.axis === "x"
+        ? phase.pair.map((row) => ({ row, col: stationNumber }))
+        : phase.pair.map((col) => ({ row: stationNumber, col }));
+    }
+
+    function endStationIndex(route) {
       const station = stationFor(route);
-      const stationIndex = route.phase.stations.indexOf(station);
-      if (stationIndex < route.phase.stations.length - 1) {
-        return {
-          phase: route.phase,
-          phaseIndex: route.phase.index,
-          station: route.phase.stations[stationIndex + 1],
-          source: "next-station"
-        };
+      return STATION_ORDER.findIndex((item) =>
+        item.phase.name === route.phase.name && item.station === station
+      );
+    }
+
+    function cellStatusesFor(route) {
+      const statuses = new Map();
+      const endIndex = endStationIndex(route);
+      const selectedKey = cellKey(route.row, route.col);
+      STATION_ORDER.forEach((item, stationIndex) => {
+        item.cells.forEach((cell) => {
+          const key = cellKey(cell.row, cell.col);
+          let status = stationIndex < endIndex ? "resolved" : "unknown";
+          if (stationIndex === endIndex && key === selectedKey) status = "resolved";
+          if (cellOverrides.has(key)) status = cellOverrides.get(key);
+          statuses.set(key, status);
+        });
+      });
+      return statuses;
+    }
+
+    function firstUnresolvedFrontier(route, statuses) {
+      const endIndex = endStationIndex(route);
+      for (let stationIndex = 0; stationIndex < STATION_ORDER.length; stationIndex += 1) {
+        const item = STATION_ORDER[stationIndex];
+        const unresolvedCells = item.cells.filter((cell) =>
+          statuses.get(cellKey(cell.row, cell.col)) !== "resolved"
+        );
+        if (unresolvedCells.length) {
+          return {
+            ...item,
+            stationIndex,
+            unresolvedCells,
+            source: stationIndex < endIndex
+              ? "earlier-miss"
+              : stationIndex === endIndex ? "same-station" : "later-unresolved"
+          };
+        }
       }
-      const nextPhase = PHASES[route.phase.index + 1];
-      if (nextPhase) {
-        return {
-          phase: { ...nextPhase, index: route.phase.index + 1 },
-          phaseIndex: route.phase.index + 1,
-          station: nextPhase.stations[0],
-          source: "next-phase"
-        };
-      }
-      return {
-        phase: route.phase,
-        phaseIndex: route.phase.index,
-        station,
-        source: "companion-only"
-      };
+      return null;
     }
 
     function leadEntryFor(frontier) {
@@ -333,9 +383,21 @@
       const routePoints = compactPoints(points);
       const phaseContext = { row, col, start, phase };
       const terminalStation = isTerminalStation(phaseContext);
-      const frontier = nextFrontierFor(phaseContext);
-      const frontierEntry = leadEntryFor(frontier);
-      const thirdTransit = thirdTransitFor(frontier, frontierEntry);
+      const cellStatuses = cellStatusesFor(phaseContext);
+      const unresolvedCells = STATION_ORDER.flatMap((item) =>
+        item.cells
+          .map((cell) => ({
+            ...cell,
+            key: cellKey(cell.row, cell.col),
+            status: cellStatuses.get(cellKey(cell.row, cell.col)),
+            phase: item.phase.name,
+            station: item.station
+          }))
+          .filter((cell) => cell.status !== "resolved")
+      );
+      const frontier = firstUnresolvedFrontier(phaseContext, cellStatuses);
+      const frontierEntry = frontier ? leadEntryFor(frontier) : null;
+      const thirdTransit = frontier ? thirdTransitFor(frontier, frontierEntry) : null;
       return {
         row, col, start, descentX, phase, points: routePoints,
         searchPrefix: searchPrefixFor(phaseContext),
@@ -343,13 +405,17 @@
         nextPhase: PHASES[phase.index + 1] || null,
         initialTurn: initialTurn(phase.heading),
         distance: pathDistance(routePoints),
+        cellStatuses,
+        unresolvedCells,
         frontier,
         frontierEntry,
-        thirdReversePoints: thirdTransit.reversePoints,
-        thirdForwardPoints: thirdTransit.forwardPoints,
-        frameResumePoints: thirdTransit.framePoints,
-        thirdTurnX: thirdTransit.turnX,
-        thirdDistance: pathDistance(thirdTransit.reversePoints) + pathDistance(thirdTransit.forwardPoints)
+        thirdReversePoints: thirdTransit ? thirdTransit.reversePoints : [SOUTH_GOAL],
+        thirdForwardPoints: thirdTransit ? thirdTransit.forwardPoints : [],
+        frameResumePoints: thirdTransit ? thirdTransit.framePoints : [],
+        thirdTurnX: thirdTransit ? thirdTransit.turnX : null,
+        thirdDistance: thirdTransit
+          ? pathDistance(thirdTransit.reversePoints) + pathDistance(thirdTransit.forwardPoints)
+          : 0
       };
     }
 
@@ -485,9 +551,15 @@
         }, `R${row}`));
         for (let col = 1; col <= 7; col += 1) {
           const unavailable = col === 7 && row <= 4;
+          const status = route.cellStatuses.get(cellKey(row, col));
           svg.appendChild(svgNode("circle", {
             cx: mapX(col * 50), cy: mapY(y), r: "7",
-            class: `arena-object-dot${row === route.row && col === route.col ? " is-selected" : ""}${unavailable ? " is-unavailable" : ""}`
+            class: [
+              "arena-object-dot",
+              status ? `is-${status}` : "",
+              row === route.row && col === route.col ? "is-selected" : "",
+              unavailable ? "is-unavailable" : ""
+            ].filter(Boolean).join(" ")
           }));
         }
       }
@@ -516,8 +588,8 @@
 
       const annotationGroup = svgNode("g", { class: "route-annotations" });
       const bottomTurn = { x: route.descentX, y: SOUTH_LANE_Y };
-      const cellKey = `R${route.row}C${route.col}`;
-      const collapseHeading = TERMINAL_EXIT_HEADINGS[cellKey];
+      const selectedCellKey = `R${route.row}C${route.col}`;
+      const collapseHeading = TERMINAL_EXIT_HEADINGS[selectedCellKey];
       if (explorationMode === "second") {
         const searchGroup = svgNode("g", { class: "route-layer route-layer--second" });
         drawPath(searchGroup, route.searchPrefix, "route-second", "arrow-second", "route-second-under");
@@ -538,7 +610,7 @@
           route.start.x > 285 ? "right" : "middle");
         drawTurn(annotationGroup, bottomTurn, ["RETURN +90° → west"],
           route.descentX > 285 ? "right" : "middle");
-      } else {
+      } else if (route.frontier) {
         const departGroup = svgNode("g", { class: "route-layer route-layer--third" });
         drawPath(departGroup, route.thirdReversePoints, "route-third", "arrow-third");
         svg.appendChild(departGroup);
@@ -656,14 +728,28 @@
           stepItem(`서쪽 전진 → goal (${SOUTH_GOAL.x}, ${SOUTH_GOAL.y})`, `run-west-to-goal · ${hugText}`)
         ].join("");
       } else {
+        if (!route.frontier) {
+          returnSteps.innerHTML = [
+            stepItem("미처리 셀 없음", "target 미수거와 판정 미확인 셀이 모두 0개이므로 3차 출발 경로를 만들지 않음"),
+            stepItem("goal에서 대기", "2차 ledger가 전체 resolved이면 south goal pose를 유지")
+          ].join("");
+          thirdSteps.innerHTML = [
+            stepItem("frame_engine 재개 불필요", "남은 station이 없으므로 세 번째 탐색을 시작하지 않음")
+          ].join("");
+          return;
+        }
         const frontierLabel = `${route.frontier.phase.name} ${route.frontier.station}`;
         const dogleg = Math.abs(route.thirdTurnX - route.frontierEntry.x) > 0.1;
         const doglegEast = route.frontierEntry.x > route.thirdTurnX;
         const entryTurn = wrap180(route.frontier.phase.heading);
-        const station = stationFor(route);
-        const pairBranch = route.frontier.source === "companion-only"
-          ? `${route.phase.name} ${station} pair가 모두 resolved면 2차 route가 끝나므로 3차 출발이 필요 없습니다. 그림은 companion만 unresolved인 경우 같은 station으로 돌아가는 contingency입니다.`
-          : `${route.phase.name} ${station}의 두 cell이 모두 resolved면 ${frontierLabel}이 다음 frontier입니다. companion이 unresolved면 다음 station으로 넘기지 않고 ${route.phase.name} ${station}의 같은 lead-entry를 선택합니다.`;
+        const frontierCells = route.frontier.unresolvedCells
+          .map((cell) => cellKey(cell.row, cell.col))
+          .join(", ");
+        const frontierReason = {
+          "earlier-miss": `종료 station보다 앞에서 남은 ${frontierCells} 때문에 이전 phase/station으로 돌아감`,
+          "same-station": `종료 station의 companion 또는 종료 셀 자체가 미처리라 같은 station부터 다시 확인`,
+          "later-unresolved": `종료 station까지 모두 resolved이고 다음 미처리 셀이 ${frontierCells}에서 시작`
+        }[route.frontier.source];
         returnSteps.innerHTML = [
           stepItem(
             `goal에서 south wall을 후진 east → x=${route.thirdTurnX}`,
@@ -688,10 +774,13 @@
           )
         ].join("");
         thirdSteps.innerHTML = [
-          stepItem(`직전 ${route.phase.name} ${station} ledger 확인`, pairBranch),
+          stepItem(
+            `전체 ledger에서 첫 미처리 station 선택`,
+            `${route.unresolvedCells.length}개 미처리 중 ${frontierLabel}이 가장 먼저 등장 · ${frontierReason}`
+          ),
           stepItem(
             `${frontierLabel}에서 공용 판정 재개`,
-            `lead-entry는 live rolling verdict가 시작되는 위치 · frame_engine의 stationary check/entry-merge/continuous cruise 계약 유지`
+            `${frontierCells} 처리부터 시작 · target 미수거와 판정 미확인을 모두 unresolved로 취급`
           ),
           phaseStep(route.frontier.phase, route.frontier.phase, `${route.frontier.station}부터`, "이후 남은 station과 phase를 동일 상태기로 처리"),
           ...PHASES.slice(route.frontier.phaseIndex + 1).map((phase) => phaseStep(phase, null)),
@@ -708,6 +797,9 @@
       selectedOutput.textContent = label;
       cellName.textContent = label;
       startCoord.textContent = `(${route.start.x}, ${route.start.y})`;
+      const missedCount = route.unresolvedCells.filter((cell) => cell.status === "missed").length;
+      const unknownCount = route.unresolvedCells.filter((cell) => cell.status === "unknown").length;
+      unresolvedOutput.textContent = `${route.unresolvedCells.length} · target ${missedCount} / 미확인 ${unknownCount}`;
       if (explorationMode === "second") {
         phaseLabel.textContent = "현재 phase";
         phaseOutput.textContent = `${route.phase.name} · h${route.phase.heading >= 0 ? "+" : ""}${route.phase.heading}°`;
@@ -741,26 +833,53 @@
         secondaryKicker.textContent = "SELECTED CELL → GOAL";
         secondaryTitle.textContent = "south 복귀와 회전";
         noteTitle.textContent = "2차 전체 경로";
-        modeNote.innerHTML = `회색 phase spine은 <code>Seq6r→Seq2r</code> 전체 경로, 굵은 남색은 ${label}까지 실제 진행한 prefix입니다. 선택 셀에서 collector가 차면 청록색 south 복귀가 시작됩니다.`;
-        arenaDesc.textContent = `goal에서 ${label}까지 이어지는 두 번째 탐색 prefix와 ${label}에서 south goal로 복귀하는 경로입니다.`;
+        modeNote.innerHTML = `회색 phase spine은 <code>Seq6r→Seq2r</code> 전체 경로, 굵은 남색은 ${label}까지 실제 진행한 prefix입니다. 현재 상태표에는 target 확인·미수거 ${missedCount}개와 판정 미확인 ${unknownCount}개가 남아 있으며 둘 다 3차 미처리 영역으로 전달됩니다.`;
+        arenaDesc.textContent = `goal에서 ${label}까지 이어지는 두 번째 탐색과 south 복귀 경로, 그리고 처리 완료·target 미수거·판정 미확인 셀 상태입니다.`;
       } else {
+        statusLabel.textContent = "PROPOSED · NOT IN JETSON YET";
+        returnMap.querySelector(".return-map-status").classList.add("is-proposed");
+        if (!route.frontier) {
+          phaseLabel.textContent = "재개 frontier";
+          phaseOutput.textContent = "없음 · 전체 resolved";
+          laneLabel.textContent = "lead-entry";
+          laneOutput.textContent = "출발 안 함";
+          distanceLabel.textContent = "합류 이동";
+          distanceOutput.textContent = "0 cm";
+          laneReason.textContent = "target 미수거와 판정 미확인 셀이 없습니다. 3차 탐색을 시작하지 않고 goal에서 종료합니다.";
+          mapHeading.replaceChildren(document.createTextNode("3차 탐색 · 미처리 영역 없음"));
+          statusText.innerHTML = "<code>3차</code>: 전체 2차 ledger가 resolved이므로 출발 경로와 frame_engine 재개가 필요하지 않음";
+          legendActiveLine.className = "legend-line legend-line--third";
+          legendActiveText.textContent = "출발 없음";
+          legendSecondaryLine.className = "legend-line legend-line--forward";
+          legendSecondaryText.textContent = "frontier 없음";
+          legendTertiary.hidden = true;
+          primaryBadge.className = "route-badge route-badge--third";
+          primaryBadge.textContent = "DONE";
+          primaryKicker.textContent = "NO UNRESOLVED CELL";
+          primaryTitle.textContent = "3차 탐색 불필요";
+          secondaryBadge.className = "route-badge route-badge--resume";
+          secondaryBadge.textContent = "STOP";
+          secondaryKicker.textContent = "LEDGER COMPLETE";
+          secondaryTitle.textContent = "goal에서 종료";
+          noteTitle.textContent = "출발 조건";
+          modeNote.innerHTML = "3차 탐색은 <code>target 확인·미수거</code> 또는 <code>판정 미확인</code> 셀이 하나 이상 있을 때만 시작합니다. 현재는 모든 셀이 처리 완료입니다. Jetson에는 반영하지 않았습니다.";
+          arenaDesc.textContent = "모든 셀이 처리 완료되어 세 번째 탐색 출발 경로가 없는 상태입니다.";
+        } else {
         const frontierLabel = `${route.frontier.phase.name} ${route.frontier.station}`;
-        const pairResolved = route.frontier.source !== "companion-only";
+        const frontierCells = route.frontier.unresolvedCells
+          .map((cell) => cellKey(cell.row, cell.col))
+          .join(", ");
         phaseLabel.textContent = "재개 frontier";
         phaseOutput.textContent = `${frontierLabel} · h${route.frontier.phase.heading >= 0 ? "+" : ""}${route.frontier.phase.heading}°`;
         laneLabel.textContent = "lead-entry";
         laneOutput.textContent = `(${route.frontierEntry.x}, ${route.frontierEntry.y})`;
         distanceLabel.textContent = "합류 이동";
         distanceOutput.textContent = `약 ${Math.round(route.thirdDistance)} cm`;
-        laneReason.textContent = pairResolved
-          ? `${label}의 station pair가 모두 resolved인 기본 분기입니다. companion이 unresolved면 같은 station의 lead-entry로 ledger frontier를 되돌립니다.`
-          : `${label} pair가 모두 resolved면 전체 2차 route가 끝나 3차 출발이 필요 없습니다. 현재 선은 companion 미처리 시 같은 station으로 재진입하는 contingency입니다.`;
+        laneReason.textContent = `${route.unresolvedCells.length}개 미처리 중 traversal order상 가장 이른 ${frontierCells}을 포함한 ${frontierLabel}부터 재개합니다.`;
         mapHeading.replaceChildren(
           document.createTextNode(`3차 탐색 · ${frontierLabel} lead-entry로 전진 합류`)
         );
-        statusLabel.textContent = "PROPOSED · NOT IN JETSON YET";
         statusText.innerHTML = `<code>3차</code>: south goal에서 벽을 따라 후진 east → x=${route.thirdTurnX}에서 north 회전 → 전진으로 ${frontierLabel} lead-entry → <code>frame_engine</code> 재개`;
-        returnMap.querySelector(".return-map-status").classList.add("is-proposed");
         legendActiveLine.className = "legend-line legend-line--third";
         legendActiveText.textContent = "south 후진";
         legendSecondaryLine.className = "legend-line legend-line--forward";
@@ -775,16 +894,31 @@
         secondaryKicker.textContent = "FRONTIER → REMAINING ROUTE";
         secondaryTitle.textContent = "frame_engine 재개와 1개 수거";
         noteTitle.textContent = "놓침 없는 3차 hand-off";
-        const branchNote = pairResolved
-          ? `${label}의 pair가 모두 resolved되었다고 보고 다음 frontier인 <code>${frontierLabel}</code>을 표시합니다. companion이 unresolved면 ledger가 같은 station을 선택합니다.`
-          : `${label}은 마지막 station입니다. pair가 모두 resolved면 3차 출발 없이 종료하고, companion이 unresolved일 때만 같은 station으로 재진입합니다.`;
-        modeNote.innerHTML = `<code>mouth west</code>로 south wall 구간만 후진하고, x=${route.thirdTurnX}에서 북향으로 돌면 이후 이동은 모두 전진입니다. ${branchNote} lead-entry는 object보다 ${FRAME_LEAD}cm 앞의 표준 판정 위치라 기존 <code>frame_engine</code>의 stationary check·entry-merge·rolling verdict를 그대로 이어갈 수 있습니다. 새 target 1개를 먹으면 west-first → south 복귀를 적용하는 제안이며, Jetson에는 반영하지 않았습니다.`;
-        arenaDesc.textContent = `south goal에서 남쪽 벽만 후진한 뒤 ${frontierLabel}의 lead-entry까지 전진하고, frame_engine으로 남은 탐색을 이어가는 세 번째 탐색 설계입니다.`;
+        modeNote.innerHTML = `<code>target 확인·미수거</code>와 <code>판정 미확인</code>을 모두 unresolved로 합친 뒤, 전체 traversal order에서 가장 이른 <code>${frontierLabel}</code>을 선택합니다. south wall 구간만 후진하고 이후에는 lead-entry까지 전진합니다. ${frontierCells}부터 기존 <code>frame_engine</code>으로 다시 판정·수거하며, 새 target 1개를 먹으면 west-first → south 복귀를 적용합니다. Jetson에는 반영하지 않았습니다.`;
+        arenaDesc.textContent = `미처리 셀 중 가장 이른 ${frontierCells}의 ${frontierLabel} lead-entry까지 전진하고, frame_engine으로 남은 탐색을 이어가는 세 번째 탐색 설계입니다.`;
+        }
       }
       grid.querySelectorAll(".return-cell").forEach((button) => {
         const active = Number(button.dataset.row) === route.row && Number(button.dataset.col) === route.col;
+        const key = cellKey(Number(button.dataset.row), Number(button.dataset.col));
+        const status = route.cellStatuses.get(key);
         button.classList.toggle("is-active", active);
+        ["resolved", "missed", "unknown"].forEach((name) => {
+          button.classList.toggle(`is-${name}`, status === name);
+        });
+        button.dataset.status = status || "unavailable";
         button.setAttribute("aria-selected", String(active));
+        if (!button.disabled) {
+          const statusTextValue = {
+            resolved: "처리 완료",
+            missed: "target 확인·미수거",
+            unknown: "판정 미확인"
+          }[status];
+          button.setAttribute(
+            "aria-label",
+            `${key} · ${statusTextValue}${active ? " · 두 번째 탐색 종료 위치" : ""}`
+          );
+        }
         button.tabIndex = active && !button.disabled ? 0 : -1;
       });
       modeInputs.forEach((input) => {
@@ -824,12 +958,28 @@
           : `R${row}C${col} 종료 위치`);
         button.textContent = `${row},${col}`;
         button.addEventListener("click", () => {
-          selected = { row, col };
-          update(routeFor(row, col));
+          if (cellTool === "end") {
+            selected = { row, col };
+            cellOverrides.clear();
+          } else {
+            cellOverrides.set(cellKey(row, col), cellTool);
+          }
+          update(routeFor(selected.row, selected.col));
         });
         grid.appendChild(button);
       }
     }
+
+    cellToolButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        cellTool = button.dataset.cellTool;
+        cellToolButtons.forEach((item) => {
+          item.classList.toggle("is-active", item === button);
+          item.setAttribute("aria-pressed", String(item === button));
+        });
+      });
+      button.setAttribute("aria-pressed", String(button.dataset.cellTool === cellTool));
+    });
 
     modeInputs.forEach((input) => {
       input.addEventListener("change", () => {

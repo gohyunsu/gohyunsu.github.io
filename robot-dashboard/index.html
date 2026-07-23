@@ -291,14 +291,14 @@ RG_HALF_TURN_ONESHOT=1 \
       <section id="return-map" class="section return-map-section" aria-labelledby="return-map-title" data-return-map>
         <div class="shell">
           <div class="section-heading">
-            <p class="eyebrow">04 · SECOND RETURN / THIRD DEPARTURE</p>
-            <h2 id="return-map-title">종료 위치를 누르면,<br />goal까지의 경로가 보입니다.</h2>
-            <p>두 번째 탐색의 마지막 셀을 선택하면 현재 <code>VIA_SOUTH</code> 플래너가 사용하는 하강 열, south-wall 주행, 회전 지점을 경기장에 표시합니다. 점선은 세 번째 주행이 같은 기하 경로를 역순으로 빠져나오는 설계선입니다.</p>
+            <p class="eyebrow">04 · SECOND / THIRD EXPLORATION</p>
+            <h2 id="return-map-title">탐색 차수를 고르면,<br />그때의 전체 경로가 보입니다.</h2>
+            <p><code>2차 탐색</code>은 goal 출발부터 Seq6r→Seq2r 탐색과 선택 셀에서의 south 복귀까지 표시합니다. <code>3차 탐색</code>은 goal에서 직전 복귀 경로를 후진으로 정확히 역주행한 뒤, 선택 셀에서 남은 탐색을 이어가는 설계입니다.</p>
           </div>
 
           <div class="return-map-status" role="note">
-            <span>CURRENT DEFAULTS</span>
-            <p><code>COL_MAX=325</code> · C1은 <code>x=75</code> · south lane <code>y=23</code> · goal <code>(17,17)</code> · <code>RG_HUG_INLINE=1</code></p>
+            <span id="exploration-status-label">CURRENT CODE</span>
+            <p id="exploration-status-text"><code>2차</code>: goal → Seq6r → Seq5r → Seq4r → Seq3r → Seq2r → 선택 셀 → south return</p>
           </div>
 
           <div class="return-map-layout">
@@ -310,17 +310,24 @@ RG_HALF_TURN_ONESHOT=1 \
                 </div>
                 <output id="return-selected-cell">R6C1</output>
               </div>
-              <p class="return-map-help">경기장과 같은 방향입니다. 위가 북쪽(R6), 왼쪽이 서쪽(C1)입니다.</p>
+              <p class="return-map-help">경기장과 같은 방향입니다. 위가 북쪽(R6), 왼쪽이 서쪽(C1)입니다. C7의 R1–R4는 현재 <code>Seq1r=0</code>이라 선택할 수 없습니다.</p>
               <div id="return-cell-grid" class="return-cell-grid" role="grid" aria-label="두 번째 탐색 종료 셀 선택"></div>
 
-              <fieldset class="return-layer-controls">
-                <legend>표시 레이어</legend>
-                <label><input type="checkbox" data-route-layer="return" checked /> <span class="route-swatch route-swatch--return"></span>두 번째 복귀</label>
-                <label><input type="checkbox" data-route-layer="third" checked /> <span class="route-swatch route-swatch--third"></span>세 번째 역방향 출발</label>
+              <fieldset class="exploration-mode">
+                <legend>표시할 탐색</legend>
+                <label class="is-active">
+                  <input type="radio" name="exploration-mode" value="second" data-exploration-mode checked />
+                  <span><strong>2차 탐색</strong><small>현재 코드 + south 복귀</small></span>
+                </label>
+                <label>
+                  <input type="radio" name="exploration-mode" value="third" data-exploration-mode />
+                  <span><strong>3차 탐색</strong><small>복귀 역주행 + 재개 설계</small></span>
+                </label>
               </fieldset>
 
               <div class="return-map-facts">
                 <div><span>선택 위치</span><strong id="return-start-coord">(50, 350)</strong></div>
+                <div><span>현재 phase</span><strong id="return-phase-name">Seq3r</strong></div>
                 <div><span>하강 통로</span><strong id="return-descent-lane">x = 75</strong></div>
                 <div><span>복귀 거리</span><strong id="return-distance">—</strong></div>
               </div>
@@ -331,11 +338,12 @@ RG_HALF_TURN_ONESHOT=1 \
               <div class="return-arena-card__head">
                 <div>
                   <p class="card-kicker">ARENA TRUE FRAME · CM</p>
-                  <h3><span id="return-map-cell-name">R6C1</span> → goal</h3>
+                  <h3 id="exploration-map-heading">2차 탐색 · <span id="return-map-cell-name">R6C1</span>에서 복귀</h3>
                 </div>
                 <div class="return-legend" aria-label="경로 범례">
-                  <span><i class="legend-line legend-line--return"></i>Return</span>
-                  <span><i class="legend-line legend-line--third"></i>Trip 3 reverse</span>
+                  <span><i class="legend-line legend-line--backbone"></i>전체 2차 route</span>
+                  <span><i id="legend-active-line" class="legend-line legend-line--second"></i><b id="legend-active-text">2차 진행</b></span>
+                  <span><i id="legend-secondary-line" class="legend-line legend-line--return"></i><b id="legend-secondary-text">goal 복귀</b></span>
                   <span><i class="legend-turn"></i>Turn</span>
                 </div>
               </div>
@@ -345,30 +353,30 @@ RG_HALF_TURN_ONESHOT=1 \
                   <desc id="return-arena-desc">R6C1에서 C1과 C2 사이 통로로 이동한 뒤 남쪽 벽으로 내려오고 서쪽으로 회전해 goal로 진입하는 경로입니다.</desc>
                 </svg>
               </div>
-              <p class="return-map-caveat">명목 셀 중심과 현재 기본값을 사용한 설계 시각화입니다. 실제 실행은 live pose, cube clearance, pose guard를 다시 검사하며 안전하지 않으면 경로를 중단합니다.</p>
+              <p class="return-map-caveat">굵은 선은 선택한 탐색에서 실제로 사용하는 구간, 회색선은 2차 탐색 전체 phase spine입니다. 셀 중심 기반 설계도이며 실제 복귀는 live pose, terminal eat heading, cube clearance와 pose guard를 다시 검사합니다.</p>
             </article>
           </div>
 
           <div class="return-instructions">
             <article>
               <div class="instruction-head">
-                <span class="route-badge route-badge--return">RETURN</span>
-                <div><p class="card-kicker">SECOND EXPLORATION → GOAL</p><h3>복귀 동작과 회전</h3></div>
+                <span id="route-primary-badge" class="route-badge route-badge--second">2ND</span>
+                <div><p id="route-primary-kicker" class="card-kicker">GOAL → SELECTED CELL</p><h3 id="route-primary-title">2차 탐색 진행</h3></div>
               </div>
               <ol id="return-route-steps" class="route-step-list"></ol>
             </article>
             <article>
               <div class="instruction-head">
-                <span class="route-badge route-badge--third">TRIP 3</span>
-                <div><p class="card-kicker">GOAL → SELECTED POSITION</p><h3>같은 경로의 역순</h3></div>
+                <span id="route-secondary-badge" class="route-badge route-badge--return">RETURN</span>
+                <div><p id="route-secondary-kicker" class="card-kicker">SELECTED CELL → GOAL</p><h3 id="route-secondary-title">south 복귀와 회전</h3></div>
               </div>
               <ol id="third-route-steps" class="route-step-list"></ol>
             </article>
           </div>
 
           <div class="return-mechanism-note">
-            <strong>회전 표기 기준</strong>
-            <p><code>mouth south</code>는 후진할 때 북쪽으로 이동하고, <code>mouth west</code>는 후진할 때 동쪽으로 이동합니다. 세 번째 경로는 위치 기하를 정확히 역순으로 표시하며, 마지막 상단 가로 구간은 복귀의 <code>to-column</code>을 반대로 수행하는 lateral strafe입니다.</p>
+            <strong id="route-note-title">2차 전체 경로</strong>
+            <p id="route-mode-note">goal에서 mouth south 상태로 후진 북상해 Seq6r에 진입하고, 다섯 phase를 순서대로 탐색합니다. 선택 셀에서 collector가 차면 해당 위치에서 south 복귀가 시작됩니다.</p>
           </div>
         </div>
       </section>

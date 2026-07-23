@@ -89,17 +89,20 @@
     const ORIGIN = 48;
     const SOUTH_LANE_Y = 23;
     const SOUTH_HUG_X = 160;
+    const SOUTH_DOGLEG_Y = 60;
+    const SOUTH_TURN_MIN_X = 175;
+    const FRAME_LEAD = 74;
     const SECOND_GOAL = { x: 17, y: 15 };
     const SOUTH_GOAL = { x: 17, y: 17 };
     const COL_MAX = 325;
     const descentByRegularColumn = [75, 75, 125, 175, 225, 275, 325];
     const descentByFrontRow = [75, 100, 150, 200, 250, 300, 325];
     const PHASES = [
-      { name: "Seq6r", heading: 90, chan: 125.6, axis: "x", entry: { x: 17, y: 125.6 }, exit: { x: 278.8, y: 125.6 } },
-      { name: "Seq5r", heading: 0, chan: 278.8, axis: "y", entry: { x: 278.8, y: 125.6 }, exit: { x: 278.8, y: 227.4 } },
-      { name: "Seq4r", heading: -90, chan: 227.4, axis: "x", entry: { x: 278.8, y: 227.4 }, exit: { x: 74.95, y: 227.4 } },
-      { name: "Seq3r", heading: 0, chan: 74.95, axis: "y", entry: { x: 74.95, y: 227.4 }, exit: { x: 74.95, y: 329.8 } },
-      { name: "Seq2r", heading: 90, chan: 329.8, axis: "x", entry: { x: 74.95, y: 329.8 }, exit: { x: 377, y: 329.8 } }
+      { name: "Seq6r", heading: 90, chan: 125.6, axis: "x", stations: ["C1", "C2", "C3", "C4", "C5", "C6"], entry: { x: 17, y: 125.6 }, exit: { x: 278.8, y: 125.6 } },
+      { name: "Seq5r", heading: 0, chan: 278.8, axis: "y", stations: ["R3", "R4"], entry: { x: 278.8, y: 125.6 }, exit: { x: 278.8, y: 227.4 } },
+      { name: "Seq4r", heading: -90, chan: 227.4, axis: "x", stations: ["C4", "C3", "C2", "C1"], entry: { x: 278.8, y: 227.4 }, exit: { x: 74.95, y: 227.4 } },
+      { name: "Seq3r", heading: 0, chan: 74.95, axis: "y", stations: ["R5", "R6"], entry: { x: 74.95, y: 227.4 }, exit: { x: 74.95, y: 329.8 } },
+      { name: "Seq2r", heading: 90, chan: 329.8, axis: "x", stations: ["C3", "C4", "C5", "C6", "C7"], entry: { x: 74.95, y: 329.8 }, exit: { x: 377, y: 329.8 } }
     ];
     const SECOND_SPINE = [SECOND_GOAL, PHASES[0].entry, ...PHASES.map((phase) => phase.exit)];
     const SEARCH_TURNS = [
@@ -121,8 +124,11 @@
     const selectedOutput = document.getElementById("return-selected-cell");
     const cellName = document.getElementById("return-map-cell-name");
     const startCoord = document.getElementById("return-start-coord");
+    const phaseLabel = document.getElementById("return-phase-label");
     const phaseOutput = document.getElementById("return-phase-name");
+    const laneLabel = document.getElementById("return-lane-label");
     const laneOutput = document.getElementById("return-descent-lane");
+    const distanceLabel = document.getElementById("return-distance-label");
     const distanceOutput = document.getElementById("return-distance");
     const laneReason = document.getElementById("return-lane-reason");
     const returnSteps = document.getElementById("return-route-steps");
@@ -136,6 +142,7 @@
     const legendActiveText = document.getElementById("legend-active-text");
     const legendSecondaryLine = document.getElementById("legend-secondary-line");
     const legendSecondaryText = document.getElementById("legend-secondary-text");
+    const legendTertiary = document.getElementById("legend-tertiary");
     const primaryBadge = document.getElementById("route-primary-badge");
     const primaryKicker = document.getElementById("route-primary-kicker");
     const primaryTitle = document.getElementById("route-primary-title");
@@ -229,27 +236,89 @@
       );
     }
 
-    function mergePoint(point, phase) {
-      return phase.axis === "x"
-        ? { x: point.x, y: phase.chan }
-        : { x: phase.chan, y: point.y };
+    function stationFor(route) {
+      return route.phase.axis === "x" ? `C${route.col}` : `R${route.row}`;
     }
 
-    function searchResumeFor(route) {
-      if (isTerminalStation(route)) {
-        const nextPhase = PHASES[route.phase.index + 1];
-        if (!nextPhase) return [route.start];
-        const points = [route.start, mergePoint(route.start, nextPhase), nextPhase.exit];
-        for (let index = route.phase.index + 2; index < PHASES.length; index += 1) {
-          points.push(PHASES[index].exit);
-        }
-        return compactPoints(points);
+    function nextFrontierFor(route) {
+      const station = stationFor(route);
+      const stationIndex = route.phase.stations.indexOf(station);
+      if (stationIndex < route.phase.stations.length - 1) {
+        return {
+          phase: route.phase,
+          phaseIndex: route.phase.index,
+          station: route.phase.stations[stationIndex + 1],
+          source: "next-station"
+        };
       }
-      const points = [route.start, lanePoint(route), route.phase.exit];
-      for (let index = route.phase.index + 1; index < PHASES.length; index += 1) {
-        points.push(PHASES[index].exit);
+      const nextPhase = PHASES[route.phase.index + 1];
+      if (nextPhase) {
+        return {
+          phase: { ...nextPhase, index: route.phase.index + 1 },
+          phaseIndex: route.phase.index + 1,
+          station: nextPhase.stations[0],
+          source: "next-phase"
+        };
       }
-      return compactPoints(points);
+      return {
+        phase: route.phase,
+        phaseIndex: route.phase.index,
+        station,
+        source: "companion-only"
+      };
+    }
+
+    function leadEntryFor(frontier) {
+      const stationNumber = Number(frontier.station.slice(1));
+      const objectAlong = frontier.phase.axis === "x"
+        ? stationNumber * 50
+        : 50 + stationNumber * 50;
+      const alongDirection = frontier.phase.heading === -90 ? -1 : 1;
+      const rawAlong = objectAlong - alongDirection * FRAME_LEAD;
+      if (frontier.phase.axis === "x") {
+        return {
+          x: Math.max(17, Math.min(377, rawAlong)),
+          y: frontier.phase.chan
+        };
+      }
+      return {
+        x: frontier.phase.chan,
+        y: Math.max(60, Math.min(377, rawAlong))
+      };
+    }
+
+    function thirdTransitFor(frontier, entry) {
+      const turnX = Math.min(COL_MAX, Math.max(SOUTH_TURN_MIN_X, entry.x));
+      const reversePoints = compactPoints([
+        SOUTH_GOAL,
+        { x: SOUTH_HUG_X, y: SOUTH_LANE_Y },
+        { x: turnX, y: SOUTH_LANE_Y }
+      ]);
+      const forwardPoints = [{ x: turnX, y: SOUTH_LANE_Y }];
+      if (Math.abs(turnX - entry.x) > 0.1) {
+        forwardPoints.push(
+          { x: turnX, y: SOUTH_DOGLEG_Y },
+          { x: entry.x, y: SOUTH_DOGLEG_Y }
+        );
+      }
+      forwardPoints.push(entry);
+      const framePoints = [entry, frontier.phase.exit];
+      for (let index = frontier.phaseIndex + 1; index < PHASES.length; index += 1) {
+        framePoints.push(PHASES[index].exit);
+      }
+      return {
+        turnX,
+        reversePoints,
+        forwardPoints: compactPoints(forwardPoints),
+        framePoints: compactPoints(framePoints)
+      };
+    }
+
+    function pathDistance(points) {
+      return points.slice(1).reduce((sum, point, index) => {
+        const previous = points[index];
+        return sum + Math.hypot(point.x - previous.x, point.y - previous.y);
+      }, 0);
     }
 
     function routeFor(row, col) {
@@ -264,20 +333,23 @@
       const routePoints = compactPoints(points);
       const phaseContext = { row, col, start, phase };
       const terminalStation = isTerminalStation(phaseContext);
-      const distance = routePoints.slice(1).reduce((sum, point, index) => {
-        const previous = routePoints[index];
-        return sum + Math.hypot(point.x - previous.x, point.y - previous.y);
-      }, 0);
+      const frontier = nextFrontierFor(phaseContext);
+      const frontierEntry = leadEntryFor(frontier);
+      const thirdTransit = thirdTransitFor(frontier, frontierEntry);
       return {
         row, col, start, descentX, phase, points: routePoints,
-        reversePoints: [...routePoints].reverse(),
         searchPrefix: searchPrefixFor(phaseContext),
-        searchResume: searchResumeFor(phaseContext),
         terminalStation,
         nextPhase: PHASES[phase.index + 1] || null,
         initialTurn: initialTurn(phase.heading),
-        restoreTurn: wrap180(phase.heading - 180),
-        distance
+        distance: pathDistance(routePoints),
+        frontier,
+        frontierEntry,
+        thirdReversePoints: thirdTransit.reversePoints,
+        thirdForwardPoints: thirdTransit.forwardPoints,
+        frameResumePoints: thirdTransit.framePoints,
+        thirdTurnX: thirdTransit.turnX,
+        thirdDistance: pathDistance(thirdTransit.reversePoints) + pathDistance(thirdTransit.forwardPoints)
       };
     }
 
@@ -383,6 +455,7 @@
       addMarker(defs, "arrow-second", "#164f5a");
       addMarker(defs, "arrow-return", "#08747a");
       addMarker(defs, "arrow-third", "#d65b45");
+      addMarker(defs, "arrow-forward", "#244f70");
       addMarker(defs, "arrow-resume", "#7b5a9b");
       svg.appendChild(defs);
 
@@ -467,37 +540,50 @@
           route.descentX > 285 ? "right" : "middle");
       } else {
         const departGroup = svgNode("g", { class: "route-layer route-layer--third" });
-        drawPath(departGroup, route.reversePoints, "route-third", "arrow-third");
+        drawPath(departGroup, route.thirdReversePoints, "route-third", "arrow-third");
         svg.appendChild(departGroup);
 
+        const forwardGroup = svgNode("g", { class: "route-layer route-layer--forward" });
+        drawPath(forwardGroup, route.thirdForwardPoints, "route-forward", "arrow-forward");
+        svg.appendChild(forwardGroup);
+
         const resumeGroup = svgNode("g", { class: "route-layer route-layer--resume" });
-        drawPath(resumeGroup, route.searchResume, "route-resume", "arrow-resume");
+        drawPath(resumeGroup, route.frameResumePoints, "route-resume", "arrow-resume");
         svg.appendChild(resumeGroup);
 
-        const restoreLines = [`RESTORE ${shortTurn(route.restoreTurn)} → ${route.phase.name}`];
-        if (collapseHeading !== undefined) {
-          restoreLines.push(`collapse ${shortTurn(-initialTurn(collapseHeading))}`);
-        } else if (route.terminalStation && route.nextPhase) {
-          const terminalTurn = SEARCH_TURNS[route.phase.index + 1];
-          restoreLines.push(`resolved pair ${shortTurn(terminalTurn.delta)} → ${route.nextPhase.name}`);
-        } else if (route.terminalStation) {
-          restoreLines.push("resolved pair → route complete");
+        const southTurn = { x: route.thirdTurnX, y: SOUTH_LANE_Y };
+        drawTurn(annotationGroup, southTurn, ["+90° → north", "이후 전 구간 전진"],
+          route.thirdTurnX > 285 ? "right" : "middle");
+        if (Math.abs(route.thirdTurnX - route.frontierEntry.x) > 0.1) {
+          const doglegTurn = route.frontierEntry.x > route.thirdTurnX ? 90 : -90;
+          drawCompactTurn(annotationGroup, {
+            point: { x: route.thirdTurnX, y: SOUTH_DOGLEG_Y },
+            delta: doglegTurn
+          });
+          drawCompactTurn(annotationGroup, {
+            point: { x: route.frontierEntry.x, y: SOUTH_DOGLEG_Y },
+            delta: -doglegTurn
+          });
         }
-        drawTurn(annotationGroup, bottomTurn, ["DEPART −90° → mouth south"],
-          route.descentX > 285 ? "right" : "middle");
-        drawTurn(annotationGroup, route.start, restoreLines,
-          route.start.x > 285 ? "right" : "middle");
-        const remainingTurnIndex = route.terminalStation
-          ? route.phase.index + 2
-          : route.phase.index + 1;
-        SEARCH_TURNS.slice(remainingTurnIndex).forEach((turn) => {
+        const entryTurn = wrap180(route.frontier.phase.heading);
+        drawTurn(annotationGroup, route.frontierEntry, [
+          `${route.frontier.phase.name} ${route.frontier.station}`,
+          `${shortTurn(entryTurn)} → frame_engine`
+        ], route.frontierEntry.x > 285 ? "right" : "middle");
+        SEARCH_TURNS.slice(route.frontier.phaseIndex + 1).forEach((turn) => {
           drawCompactTurn(annotationGroup, turn);
         });
+        annotationGroup.appendChild(svgNode("circle", {
+          cx: mapX(route.frontierEntry.x), cy: mapY(route.frontierEntry.y),
+          r: "9", class: "frontier-marker"
+        }));
       }
 
-      annotationGroup.appendChild(svgNode("circle", {
-        cx: mapX(route.start.x), cy: mapY(route.start.y), r: "9", class: "start-marker"
-      }));
+      if (explorationMode === "second") {
+        annotationGroup.appendChild(svgNode("circle", {
+          cx: mapX(route.start.x), cy: mapY(route.start.y), r: "9", class: "start-marker"
+        }));
+      }
       annotationGroup.appendChild(svgNode("rect", {
         x: mapX(SOUTH_GOAL.x) - 9, y: mapY(SOUTH_GOAL.y) - 9, width: "18", height: "18", rx: "3", class: "goal-marker"
       }));
@@ -543,9 +629,6 @@
       const initialTitle = route.initialTurn
         ? `${turnLabel(route.initialTurn)} → mouth south`
         : "mouth south 유지 · 초기 회전 없음";
-      const restoreTitle = route.restoreTurn
-        ? `${turnLabel(route.restoreTurn)} → ${route.phase.name} heading 복원`
-        : `${route.phase.name} heading 유지`;
       const hugText = route.descentX > SOUTH_HUG_X
         ? `x=${SOUTH_HUG_X}을 통과할 때 hold y를 ${SOUTH_LANE_Y}→${SOUTH_GOAL.y}로 전환하며 멈추지 않음`
         : `이미 x<${SOUTH_HUG_X}이므로 west leg 시작부터 hold y=${SOUTH_GOAL.y}`;
@@ -573,36 +656,49 @@
           stepItem(`서쪽 전진 → goal (${SOUTH_GOAL.x}, ${SOUTH_GOAL.y})`, `run-west-to-goal · ${hugText}`)
         ].join("");
       } else {
-        const terminalResume = route.terminalStation
-          ? [
-              stepItem(
-                `${route.phase.name} terminal station의 ledger 분기`,
-                route.nextPhase
-                  ? `pair의 다른 cell까지 resolved면 closing leg 없이 셀 위에서 ${route.nextPhase.name}으로 회전 · unresolved면 같은 station부터 frame_engine 재진입`
-                  : "pair의 다른 cell까지 resolved면 2차 route 완료 · unresolved면 같은 station부터 frame_engine 재진입"
-              ),
-              ...(route.nextPhase
-                ? [
-                    phaseStep(route.nextPhase, route.nextPhase, "entry-merge로 재개", "선택 셀의 cross offset을 pure strafe로 흡수"),
-                    ...PHASES.slice(route.phase.index + 2).map((phase) => phaseStep(phase, null))
-                  ]
-                : [])
-            ]
-          : [
-              stepItem(`${route.phase.name} channel로 복귀`, "선택 셀의 lateral eat offset을 정리하고 기존 frame_engine 상태기로 복귀"),
-              ...PHASES.slice(route.phase.index).map((phase, index) => phaseStep(phase, index === 0 ? route.phase : null, "선택 셀에서 재개"))
-            ];
+        const frontierLabel = `${route.frontier.phase.name} ${route.frontier.station}`;
+        const dogleg = Math.abs(route.thirdTurnX - route.frontierEntry.x) > 0.1;
+        const doglegEast = route.frontierEntry.x > route.thirdTurnX;
+        const entryTurn = wrap180(route.frontier.phase.heading);
+        const station = stationFor(route);
+        const pairBranch = route.frontier.source === "companion-only"
+          ? `${route.phase.name} ${station} pair가 모두 resolved면 2차 route가 끝나므로 3차 출발이 필요 없습니다. 그림은 companion만 unresolved인 경우 같은 station으로 돌아가는 contingency입니다.`
+          : `${route.phase.name} ${station}의 두 cell이 모두 resolved면 ${frontierLabel}이 다음 frontier입니다. companion이 unresolved면 다음 station으로 넘기지 않고 ${route.phase.name} ${station}의 같은 lead-entry를 선택합니다.`;
         returnSteps.innerHTML = [
-          stepItem(`goal에서 후진 east → x=${route.descentX}`, `mouth west 유지 · 로봇은 동쪽으로 이동 · 직전 run-west-to-goal과 inline south-hug의 정확한 역순`),
-          stepItem("좌회전(CCW) −90° → mouth south", `(${route.descentX}, ${SOUTH_LANE_Y})에서 northbound reverse 준비`),
-          stepItem(`후진 북상 → (${route.descentX}, ${route.start.y})`, "mouth south 유지 · 직전 descend-to-south의 역순"),
-          ...(toColumn ? [stepItem(`Lateral strafe → x=${route.start.x}`, "직전 to-column을 반대로 수행해 종료 pose의 x 좌표 복원")] : []),
-          stepItem(restoreTitle, `선택 위치의 기존 탐색 heading 복원.${terminalBranchText(route, true)}`)
+          stepItem(
+            `goal에서 south wall을 후진 east → x=${route.thirdTurnX}`,
+            `mouth west 유지 · (${SOUTH_GOAL.x},${SOUTH_GOAL.y}) → inline hug (${SOUTH_HUG_X},${SOUTH_LANE_Y}) → (${route.thirdTurnX},${SOUTH_LANE_Y})`
+          ),
+          stepItem("우회전(CW) +90° → mouth north", "남쪽 벽의 안전 회전점에서 방향 전환 · 이 지점부터 모든 이동은 전진"),
+          ...(dogleg
+            ? [
+                stepItem(
+                  `전진 dogleg → x=${route.frontierEntry.x}`,
+                  `north to y=${SOUTH_DOGLEG_Y} → ${doglegEast ? "우회전 +90° east" : "좌회전 −90° west"} → x=${route.frontierEntry.x} → ${doglegEast ? "좌회전 −90°" : "우회전 +90°"} north`
+                )
+              ]
+            : []),
+          stepItem(
+            `전진 북상 → ${frontierLabel} lead-entry`,
+            `(${route.frontierEntry.x},${route.frontierEntry.y}) · object 기준 CH_LEAD=${FRAME_LEAD}cm · station 판정 window 중앙`
+          ),
+          stepItem(
+            entryTurn ? `${turnLabel(entryTurn)} → ${route.frontier.phase.name} heading` : "mouth north 유지 · entry 회전 없음",
+            `fresh live pose와 ledger를 넘기고 frame_engine을 ${route.frontier.station}부터 시작`
+          )
         ].join("");
         thirdSteps.innerHTML = [
-          stepItem(`R${route.row}C${route.col} resolved 상태 확인`, "직전 마지막 eat은 ledger가 소비하고, 다음 unresolved station부터 재개"),
-          ...terminalResume,
-          stepItem("새 target 1개 획득 시 다시 goal 복귀", "제안 계약: 3차는 시간 보호를 위해 TRIP_RETURN_AFTER=1")
+          stepItem(`직전 ${route.phase.name} ${station} ledger 확인`, pairBranch),
+          stepItem(
+            `${frontierLabel}에서 공용 판정 재개`,
+            `lead-entry는 live rolling verdict가 시작되는 위치 · frame_engine의 stationary check/entry-merge/continuous cruise 계약 유지`
+          ),
+          phaseStep(route.frontier.phase, route.frontier.phase, `${route.frontier.station}부터`, "이후 남은 station과 phase를 동일 상태기로 처리"),
+          ...PHASES.slice(route.frontier.phaseIndex + 1).map((phase) => phaseStep(phase, null)),
+          stepItem(
+            "새 target 1개 획득 → west-first return",
+            "제안 계약: live eat pose에서 서쪽 안전 통로로 먼저 빠진 뒤 south lane으로 내려가 goal 복귀 · 새 target 위치가 정해져야 실제 선분을 계산"
+          )
         ].join("");
       }
     }
@@ -612,16 +708,19 @@
       selectedOutput.textContent = label;
       cellName.textContent = label;
       startCoord.textContent = `(${route.start.x}, ${route.start.y})`;
-      phaseOutput.textContent = `${route.phase.name} · h${route.phase.heading >= 0 ? "+" : ""}${route.phase.heading}°`;
-      laneOutput.textContent = `x = ${route.descentX}`;
-      distanceOutput.textContent = `약 ${Math.round(route.distance)} cm`;
-      laneReason.textContent = laneExplanation(route);
-      mapHeading.replaceChildren(
-        document.createTextNode(explorationMode === "second" ? "2차 탐색 · " : "3차 탐색 · "),
-        cellName,
-        document.createTextNode(explorationMode === "second" ? "에서 south 복귀" : "까지 역주행 후 재개")
-      );
       if (explorationMode === "second") {
+        phaseLabel.textContent = "현재 phase";
+        phaseOutput.textContent = `${route.phase.name} · h${route.phase.heading >= 0 ? "+" : ""}${route.phase.heading}°`;
+        laneLabel.textContent = "하강 통로";
+        laneOutput.textContent = `x = ${route.descentX}`;
+        distanceLabel.textContent = "복귀 거리";
+        distanceOutput.textContent = `약 ${Math.round(route.distance)} cm`;
+        laneReason.textContent = laneExplanation(route);
+        mapHeading.replaceChildren(
+          document.createTextNode("2차 탐색 · "),
+          cellName,
+          document.createTextNode("에서 south 복귀")
+        );
         const actualPhases = PHASES.slice(0, route.phase.index + 1)
           .map((phase) => phase.name)
           .join(" → ");
@@ -632,6 +731,7 @@
         legendActiveText.textContent = "2차 진행";
         legendSecondaryLine.className = "legend-line legend-line--return";
         legendSecondaryText.textContent = "goal 복귀";
+        legendTertiary.hidden = true;
         primaryBadge.className = "route-badge route-badge--second";
         primaryBadge.textContent = "2ND";
         primaryKicker.textContent = "GOAL → SELECTED CELL";
@@ -644,27 +744,42 @@
         modeNote.innerHTML = `회색 phase spine은 <code>Seq6r→Seq2r</code> 전체 경로, 굵은 남색은 ${label}까지 실제 진행한 prefix입니다. 선택 셀에서 collector가 차면 청록색 south 복귀가 시작됩니다.`;
         arenaDesc.textContent = `goal에서 ${label}까지 이어지는 두 번째 탐색 prefix와 ${label}에서 south goal로 복귀하는 경로입니다.`;
       } else {
+        const frontierLabel = `${route.frontier.phase.name} ${route.frontier.station}`;
+        const pairResolved = route.frontier.source !== "companion-only";
+        phaseLabel.textContent = "재개 frontier";
+        phaseOutput.textContent = `${frontierLabel} · h${route.frontier.phase.heading >= 0 ? "+" : ""}${route.frontier.phase.heading}°`;
+        laneLabel.textContent = "lead-entry";
+        laneOutput.textContent = `(${route.frontierEntry.x}, ${route.frontierEntry.y})`;
+        distanceLabel.textContent = "합류 이동";
+        distanceOutput.textContent = `약 ${Math.round(route.thirdDistance)} cm`;
+        laneReason.textContent = pairResolved
+          ? `${label}의 station pair가 모두 resolved인 기본 분기입니다. companion이 unresolved면 같은 station의 lead-entry로 ledger frontier를 되돌립니다.`
+          : `${label} pair가 모두 resolved면 전체 2차 route가 끝나 3차 출발이 필요 없습니다. 현재 선은 companion 미처리 시 같은 station으로 재진입하는 contingency입니다.`;
+        mapHeading.replaceChildren(
+          document.createTextNode(`3차 탐색 · ${frontierLabel} lead-entry로 전진 합류`)
+        );
         statusLabel.textContent = "PROPOSED · NOT IN JETSON YET";
-        statusText.innerHTML = `<code>3차</code>: south goal에서 후진 east → 직전 하강 열에서 후진 north → ${label} heading 복원 → 남은 2차 route 재개`;
+        statusText.innerHTML = `<code>3차</code>: south goal에서 벽을 따라 후진 east → x=${route.thirdTurnX}에서 north 회전 → 전진으로 ${frontierLabel} lead-entry → <code>frame_engine</code> 재개`;
         returnMap.querySelector(".return-map-status").classList.add("is-proposed");
         legendActiveLine.className = "legend-line legend-line--third";
-        legendActiveText.textContent = "복귀 역주행";
-        legendSecondaryLine.className = "legend-line legend-line--resume";
-        legendSecondaryText.textContent = "탐색 재개";
+        legendActiveText.textContent = "south 후진";
+        legendSecondaryLine.className = "legend-line legend-line--forward";
+        legendSecondaryText.textContent = "frontier 전진";
+        legendTertiary.hidden = false;
         primaryBadge.className = "route-badge route-badge--third";
         primaryBadge.textContent = "3RD";
-        primaryKicker.textContent = "GOAL → PREVIOUS END POSE";
-        primaryTitle.textContent = "직전 복귀 경로의 역순";
+        primaryKicker.textContent = "GOAL → FRONTIER LEAD-ENTRY";
+        primaryTitle.textContent = "south 후진 뒤 전진 합류";
         secondaryBadge.className = "route-badge route-badge--resume";
         secondaryBadge.textContent = "RESUME";
-        secondaryKicker.textContent = "SELECTED CELL → REMAINING FRONTIER";
-        secondaryTitle.textContent = "2차 route에서 탐색 재개";
-        noteTitle.textContent = "3차 출발 계약";
-        const terminalNote = route.terminalStation
-          ? ` ${label}은 ${route.phase.name}의 terminal station이므로, 보라색은 pair가 모두 resolved되어 ${route.nextPhase ? `${route.nextPhase.name} entry-merge로 넘어가는` : "route가 끝나는"} 분기를 표시합니다. companion이 unresolved면 같은 station을 먼저 처리합니다.`
-          : "";
-        modeNote.innerHTML = `<code>mouth west</code>를 유지한 후진 east가 첫 동작입니다. 직전 복귀의 drive와 turn을 역순·반대 부호로 수행한 뒤 ${label}에서 heading을 복원하고, ledger상 다음 unresolved station부터 이어갑니다.${terminalNote} 현재 코드의 clock-gated resume는 다시 <code>goto_first_lane()</code>로 Seq6r entry부터 출발하므로, 이 정확한 역주행 출발은 아직 구현 전입니다.`;
-        arenaDesc.textContent = `south goal에서 ${label}까지 직전 복귀를 역주행하고, ${label}에서 남은 두 번째 탐색 route를 이어가는 세 번째 탐색 설계입니다.`;
+        secondaryKicker.textContent = "FRONTIER → REMAINING ROUTE";
+        secondaryTitle.textContent = "frame_engine 재개와 1개 수거";
+        noteTitle.textContent = "놓침 없는 3차 hand-off";
+        const branchNote = pairResolved
+          ? `${label}의 pair가 모두 resolved되었다고 보고 다음 frontier인 <code>${frontierLabel}</code>을 표시합니다. companion이 unresolved면 ledger가 같은 station을 선택합니다.`
+          : `${label}은 마지막 station입니다. pair가 모두 resolved면 3차 출발 없이 종료하고, companion이 unresolved일 때만 같은 station으로 재진입합니다.`;
+        modeNote.innerHTML = `<code>mouth west</code>로 south wall 구간만 후진하고, x=${route.thirdTurnX}에서 북향으로 돌면 이후 이동은 모두 전진입니다. ${branchNote} lead-entry는 object보다 ${FRAME_LEAD}cm 앞의 표준 판정 위치라 기존 <code>frame_engine</code>의 stationary check·entry-merge·rolling verdict를 그대로 이어갈 수 있습니다. 새 target 1개를 먹으면 west-first → south 복귀를 적용하는 제안이며, Jetson에는 반영하지 않았습니다.`;
+        arenaDesc.textContent = `south goal에서 남쪽 벽만 후진한 뒤 ${frontierLabel}의 lead-entry까지 전진하고, frame_engine으로 남은 탐색을 이어가는 세 번째 탐색 설계입니다.`;
       }
       grid.querySelectorAll(".return-cell").forEach((button) => {
         const active = Number(button.dataset.row) === route.row && Number(button.dataset.col) === route.col;

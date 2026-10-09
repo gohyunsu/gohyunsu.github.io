@@ -5,6 +5,8 @@
 const $ = id => document.getElementById(id);
 const W = 256, H = 640, B = 8, GRID_W = W / B, GRID_H = H / B;
 const samplePaths = Array.from({ length: 6 }, (_, i) => `./samples/sample-${String(i + 1).padStart(2, "0")}.jpg`);
+// Dataset labels for the fixed sample order in build_pages.py (verified against manifest.csv).
+const sampleLabels = ["Defect", "Defect", "Defect", "Normal", "Normal", "Normal"];
 let objectUrl = null;
 let requestId = 0;
 const modelPromise = fetch("./normal_reference.json").then(response => {
@@ -156,8 +158,10 @@ async function infer(blob, model) {
 const setStatus = (label, type = "") => { $("status").textContent = label; $("status").className = "status " + type; };
 const steps = list => { $("actions").replaceChildren(...list.map(text => { const li = document.createElement("li"); li.textContent = text; return li; })); };
 
-async function analyze(blob, label) {
+async function analyze(blob, label, datasetLabel = null) {
   const thisRequest = ++requestId;
+  $("datasetLabel").hidden = !datasetLabel;
+  $("datasetLabel").textContent = datasetLabel ? `Dataset label: ${datasetLabel}` : "";
   if (blob.size > 15_000_000) { setStatus("File is too large", "unknown"); return; }
   if (objectUrl) URL.revokeObjectURL(objectUrl);
   objectUrl = URL.createObjectURL(blob);
@@ -185,11 +189,15 @@ async function analyze(blob, label) {
       steps(["Check highlighted areas", "Retake with matching framing"]);
     } else if (result.score >= result.threshold) {
       setStatus("Review needed", "review");
-      $("assessment").textContent = "Above the review threshold. Inspect the red areas.";
+      $("assessment").textContent = datasetLabel === "Normal"
+        ? "Above the review threshold, although the dataset labels this photo normal. Check this false alarm."
+        : "Above the review threshold. Inspect the red areas.";
       steps(["Inspect highlighted areas", "Retake the same area", "Record against site criteria"]);
     } else {
       setStatus("Within range", "ok");
-      $("assessment").textContent = "Within the review threshold.";
+      $("assessment").textContent = datasetLabel === "Defect"
+        ? "Below the review threshold, despite the dataset defect label. This sample was not flagged."
+        : "Within the review threshold.";
       steps(["Check any highlighted areas", "Record the result if clear"]);
     }
   } catch (error) {
@@ -205,7 +213,7 @@ async function loadSample(index) {
   const response = await fetch(samplePaths[index]);
   if (!response.ok) { setStatus("Could not load the sample", "unknown"); return; }
   for (const [i, button] of sampleButtons.entries()) button.setAttribute("aria-pressed", i === index ? "true" : "false");
-  analyze(await response.blob(), `Sample ${String(index + 1).padStart(2, "0")}`);
+  analyze(await response.blob(), `Sample ${String(index + 1).padStart(2, "0")}`, sampleLabels[index]);
 }
 
 $("trySample").addEventListener("click", () => loadSample(0));
@@ -217,9 +225,13 @@ for (const [i, path] of samplePaths.entries()) {
   const name = `Sample ${String(i + 1).padStart(2, "0")}`;
   const button = document.createElement("button"); button.type = "button"; button.className = "sample";
   button.setAttribute("aria-pressed", "false");
-  const image = document.createElement("img"); image.src = path; image.alt = name;
-  const label = document.createElement("span"); label.textContent = name;
-  button.append(image, label);
+  button.setAttribute("aria-label", `${name}, dataset label: ${sampleLabels[i]}`);
+  const image = document.createElement("img"); image.src = path; image.alt = "";
+  const meta = document.createElement("span"); meta.className = "sample-meta";
+  const label = document.createElement("span"); label.className = "sample-name"; label.textContent = name;
+  const truth = document.createElement("span"); truth.className = "sample-truth"; truth.textContent = `Dataset: ${sampleLabels[i]}`;
+  meta.append(label, truth);
+  button.append(image, meta);
   button.addEventListener("click", () => loadSample(i));
   $("samples").append(button);
   sampleButtons.push(button);

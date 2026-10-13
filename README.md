@@ -5,7 +5,7 @@ This repository serves [gohyunsu.github.io](https://gohyunsu.github.io/) from th
 ## Editing
 
 - Update copy and links in `index.html`.
-- Update layout, type, and colors in `assets/css/portfolio.css`.
+- Update layout, type, and colors in `assets/css/portfolio-dark.css`.
 - Replace `assets/img/profile.png` and `assets/cv/Hyunsu_Go_CV.pdf` when those materials change.
 - Preview locally with `python -m http.server 8000`, then open `http://localhost:8000/`.
 

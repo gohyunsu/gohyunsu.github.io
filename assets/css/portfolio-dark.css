@@ -172,7 +172,6 @@ h1 em, h2 em { color: var(--accent); font-weight: 400; }
   height: clamp(390px, 39vw, 515px);
   object-fit: cover;
   object-position: center 38%;
-  filter: grayscale(1) contrast(1.06) brightness(.82) sepia(.08);
 }
 .hero-portrait figcaption {
   display: flex;

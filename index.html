@@ -1,46 +1,147 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Hyunsu Go | Student Researcher</title>
-    <meta
-      name="description"
-      content="Hyunsu Go is a student researcher working on medical AI, 3D MRI analysis, efficient deep learning, and emerging directions in robotics and embodied AI."
-    />
-    <link
-      rel="icon"
-      type="image/svg+xml"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23f7f3eb'/%3E%3Cpath d='M18 20h8v24h-8zM38 20h8v24h-8zM18 30h28v4H18z' fill='%23235963'/%3E%3C/svg%3E"
-    />
+    <meta name="theme-color" content="#f4f1eb" />
+    <meta name="description" content="Hyunsu Go is a student researcher at Seoul National University working on biomedical signal learning and medical imaging." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Hyunsu Go — Research" />
+    <meta property="og:description" content="Biomedical signal learning, medical imaging, and an interest in 3D vision." />
+    <meta property="og:image" content="https://gohyunsu.github.io/assets/img/profile.png" />
+    <title>Hyunsu Go — Research</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%231d2a28'/%3E%3Ctext x='32' y='42' text-anchor='middle' font-family='Georgia' font-size='27' fill='%23f4f1eb'%3EHG%3C/text%3E%3C/svg%3E" />
     <link rel="stylesheet" href="assets/css/style.css" />
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to content</a>
-
-    <header class="site-header" data-render="header"></header>
-
-    <main id="main" class="site-main">
-      <section id="about" data-render="hero"></section>
-      <section id="research" data-render="research"></section>
-      <section id="publications" data-render="publications"></section>
-      <section id="news" data-render="news"></section>
-      <section id="experience" data-render="experience"></section>
-      <section id="education" data-render="education"></section>
-      <section id="awards" data-render="awards"></section>
-      <section id="contact" data-render="contact"></section>
-    </main>
-
-    <footer class="site-footer" data-render="footer"></footer>
-
-    <noscript>
-      <div class="noscript-note">
-        This site uses a small amount of JavaScript to render content from a
-        single data file.
+    <header class="site-header">
+      <div class="shell header-inner">
+        <a class="wordmark" href="#top" aria-label="Hyunsu Go, back to top">Hyunsu Go<span class="wordmark-dot">.</span></a>
+        <nav class="site-nav" aria-label="Main navigation">
+          <a href="#research">Research</a>
+          <a href="#publications">Publications</a>
+          <a href="#experience">Experience</a>
+          <a href="#contact">Contact <span aria-hidden="true">↗</span></a>
+        </nav>
       </div>
-    </noscript>
-
-    <script src="assets/js/site-data.js"></script>
-    <script src="assets/js/main.js"></script>
+    </header>
+    <main id="main">
+      <section class="hero shell" id="top" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="eyebrow-line"></span> Student researcher · Seoul, South Korea</p>
+          <h1 id="hero-title">Hyunsu<br /><em>Go.</em></h1>
+          <p class="hero-intro">Working at the intersection of <strong>biomedical signals</strong> and <strong>medical imaging.</strong></p>
+          <p class="hero-description">I study representations of single-cell signals and 3D medical images, with a growing interest in 3D vision and embodied AI.</p>
+          <div class="hero-actions">
+            <a class="button button-primary" href="mailto:hsmail02@snu.ac.kr">Get in touch <span aria-hidden="true">↗</span></a>
+            <a class="text-link" href="assets/cv/Hyunsu_Go_CV.pdf">View CV <span aria-hidden="true">↗</span></a>
+          </div>
+        </div>
+        <figure class="hero-portrait">
+          <img src="assets/img/profile.png" alt="Portrait of Hyunsu Go outdoors" width="768" height="1024" fetchpriority="high" />
+          <figcaption>Hyunsu Go <span>01 / 01</span></figcaption>
+        </figure>
+        <div class="hero-footnote" aria-label="Affiliation">
+          <span>Seoul National University</span>
+          <span>Mechanical Engineering · Computer Science · Economics</span>
+        </div>
+      </section>
+      <section class="section research-section" id="research" aria-labelledby="research-title">
+        <div class="shell">
+          <div class="section-heading">
+            <p class="kicker">01 / Research</p>
+            <h2 id="research-title">Questions that<br /><em>drive the work.</em></h2>
+            <p>From cellular measurements to volumetric images, I work on learning useful representations from complex biomedical data.</p>
+          </div>
+          <div class="research-list">
+            <article class="research-item"><span class="research-number">01</span><div><h3>Biomedical signal learning</h3><p>Representation learning and analysis for SMR-based single-cell signals, including cross-experiment correction and interpretability.</p></div><span class="research-symbol" aria-hidden="true">↗</span></article>
+            <article class="research-item"><span class="research-number">02</span><div><h3>Medical imaging AI</h3><p>3D MRI analysis and clinical prediction, with work in self-supervised learning and efficient models for medical images.</p></div><span class="research-symbol" aria-hidden="true">↗</span></article>
+            <article class="research-item"><span class="research-number">03</span><div><h3>Emerging interests</h3><p>Exploring connections to 3D vision, generative modeling, human-object interaction, and embodied AI.</p></div><span class="research-symbol" aria-hidden="true">↗</span></article>
+          </div>
+        </div>
+      </section>
+      <section class="section publications-section shell" id="publications" aria-labelledby="publications-title">
+        <div class="section-heading publications-heading">
+          <p class="kicker">02 / Publications</p>
+          <h2 id="publications-title">Selected<br /><em>publications.</em></h2>
+          <p>Peer-reviewed work in volumetric imaging and self-supervised representation learning.</p>
+        </div>
+        <div class="publication-list">
+          <article class="publication" id="pub-mma-former">
+            <div class="publication-meta"><span>2026</span><span>ISBI · Oral presentation</span></div>
+            <div class="publication-content">
+              <h3><a href="https://confcats-event-sessions.s3.us-east-1.amazonaws.com/isbi26/uploads/ISBI_2026_Program_v11b.pdf">MMA-Former: Multi-Window Mixture-of-Head Attention Transformer for Adaptive PNI Prediction in 3D MRI <span aria-hidden="true">↗</span></a></h3>
+              <p>Youngung Han, Induk Um, Kyeonghun Kim, Junga Kim, <strong>Hyunsu Go</strong>, Jaewon Jung, Nam-Joon Kim, et al.</p>
+              <span class="publication-topic">3D MRI · PNI prediction</span>
+            </div>
+          </article>
+          <article class="publication" id="pub-losa-net">
+            <div class="publication-meta"><span>2026</span><span>ISBI · Oral presentation</span></div>
+            <div class="publication-content">
+              <h3><a href="https://confcats-event-sessions.s3.us-east-1.amazonaws.com/isbi26/uploads/ISBI_2026_Program_v11b.pdf">LoSA-Net: A Localized and Scale-Adaptive Network for Boundary-Sensitive Prediction of Perineural Invasion in 3D MRI <span aria-hidden="true">↗</span></a></h3>
+              <p>Youngung Han, <strong>Hyunsu Go</strong>, Kyeonghun Kim, Induk Um, Junga Kim, Jaewon Jung, Nam-Joon Kim, et al.</p>
+              <span class="publication-topic">3D MRI · Boundary prediction</span>
+            </div>
+          </article>
+          <article class="publication" id="pub-maesil">
+            <div class="publication-meta"><span>2026</span><span>ICEIC</span></div>
+            <div class="publication-content">
+              <h3><a href="https://arxiv.org/abs/2604.00514">MAESIL: Masked Autoencoder for Enhanced Self-Supervised Medical Image Learning <span aria-hidden="true">↗</span></a></h3>
+              <p>Kyeonghun Kim, Hyeonseok Jung, Youngung Han, Junsu Lim, YeonJu Jean, Seongbin Park, Eunseob Choi, <strong>Hyunsu Go</strong>, et al.</p>
+              <span class="publication-topic">Self-supervised learning · 3D CT</span>
+            </div>
+          </article>
+        </div>
+        <p class="publication-note">A concise selection of accepted work. Further details are available in the <a href="assets/cv/Hyunsu_Go_CV.pdf">CV <span aria-hidden="true">↗</span></a>.</p>
+      </section>
+      <section class="section experience-section" id="experience" aria-labelledby="experience-title">
+        <div class="shell experience-grid">
+          <div class="section-heading experience-heading">
+            <p class="kicker">03 / Experience</p>
+            <h2 id="experience-title">Where ideas<br /><em>take shape.</em></h2>
+            <p>Research across biomedical instrumentation and medical image analysis at Seoul National University.</p>
+          </div>
+          <div class="experience-list">
+            <article class="experience-item">
+              <p class="experience-date">Jul 2024 — Present</p>
+              <h3><a href="https://kanglab.snu.ac.kr/">Precision Bioinstrumentation Laboratory <span aria-hidden="true">↗</span></a></h3>
+              <p class="experience-place">Seoul National University · Mechanical Engineering</p>
+              <p>Single-cell signal analysis, representation learning, cross-experiment correction, and interpretability.</p>
+            </article>
+            <article class="experience-item">
+              <p class="experience-date">Aug 2025 — Apr 2026</p>
+              <h3><a href="https://snulabs.github.io/imsi/">Imaging-driven Medical SuperIntelligence Group <span aria-hidden="true">↗</span></a></h3>
+              <p class="experience-place">Seoul National University · AI Semiconductor Engineering</p>
+              <p>3D MRI analysis, perineural invasion prediction, self-supervised learning, and efficient medical imaging models.</p>
+            </article>
+            <div class="recognition">
+              <p class="recognition-label">Selected recognition</p>
+              <p>Presidential Science Scholarship <span>2023 — Present</span></p>
+              <p>Best Presentation Award, ICEAS <span>2024</span></p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="contact-section" id="contact" aria-labelledby="contact-title">
+        <div class="shell contact-grid">
+          <div>
+            <p class="kicker">04 / Contact</p>
+            <h2 id="contact-title">Let's start a<br /><em>conversation.</em></h2>
+            <p>For research conversations and collaborations, reach me by email.</p>
+          </div>
+          <div class="contact-action">
+            <a class="contact-email" href="mailto:hsmail02@snu.ac.kr">hsmail02@snu.ac.kr <span aria-hidden="true">↗</span></a>
+            <div class="contact-links" aria-label="Profiles and documents">
+              <a href="https://scholar.google.com/citations?user=Gjaw-5oAAAAJ">Google Scholar ↗</a>
+              <a href="https://github.com/gohyunsu">GitHub ↗</a>
+              <a href="https://www.linkedin.com/in/hyunsu-go-650546348/">LinkedIn ↗</a>
+              <a href="assets/cv/Hyunsu_Go_CV.pdf">CV ↗</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer"><div class="shell footer-inner"><span>© 2026 Hyunsu Go</span><a href="#top">Back to top ↑</a></div></footer>
   </body>
 </html>

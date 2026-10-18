@@ -119,14 +119,14 @@ def build():
     y = paper(
         pdf,
         "From Complete Scanpaths to Finding-Level Gaze Targets in Chest Radiography: Structured Cues and Learned Reweighting",
-        "Sumin Lee, <b>Hyunsu Go</b>, Subeen Lee, Kyeonghun Kim, Nam-Joon Kim.",
+        "Sumin Lee, <b>Hyunsu Go</b>, Subeen Lee, Kyeonghun Kim, and Nam-Joon Kim.",
         "2026  |  MedAI, Accepted",
         y,
     )
     y = paper(
         pdf,
-        "MAESIL: Masked Autoencoder for Enhanced Self-Supervised Medical Image Learning",
-        "Kyeonghun Kim, Hyeonseok Jung, Youngung Han, Junsu Lim, YeonJu Jean, Seongbin Park, Eunseob Choi, <b>Hyunsu Go</b>, SeoYoung Ju, Seohyoung Park, Gyeongmin Kim, MinJu Kwon, KyungSeok Yuh, Soo Yong Kim, Ken Ying-Kai Liao, Nam-Joon Kim, Hyuk-Jae Lee.",
+        "MAESIL: Masked Autoencoder for Enhanced Self-supervised Medical Image Learning",
+        "Kyeonghun Kim, Hyeonseok Jung, Youngung Han, Junsu Lim, Yeonju Jean, Seongbin Park, Eunseob Choi, <b>Hyunsu Go</b>, Seoyoung Ju, Seohyoung Park, Gyeongmin Kim, Minju Kwon, Kyungseok Yuh, Soo Yong Kim, Ken Ying-Kai Liao, Nam-Joon Kim, Hyuk-Jae Lee.",
         "2026  |  ICEIC, Published  |  doi:10.1109/ICEIC69189.2026.11386292",
         y,
     )

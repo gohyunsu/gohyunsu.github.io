@@ -66,20 +66,12 @@ section[id] { scroll-margin-top: 88px; }
 .section-label { margin-bottom: 17px; }
 .section-intro h2, .contact-grid h2 { margin-bottom: 15px; font-size: clamp(2.25rem, 4vw, 3.35rem); font-weight: 620; letter-spacing: -.05em; line-height: 1.12; }
 .section-intro > p:last-child { max-width: 680px; margin-bottom: 0; color: var(--ink-soft); font-size: .96rem; line-height: 1.7; }
-.research-section, .education-section, .contact-section { background: var(--surface); }
-.research-flow { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; }
-.flow-step { min-width: 0; border-top: 1px solid var(--line); padding: 21px 0 0; }
-.flow-illustration { display: flex; align-items: center; height: 112px; margin-bottom: 17px; color: #9aadb0; }
-.flow-illustration svg { width: 180px; max-width: 100%; height: 92px; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-.flow-illustration .soft-stroke { stroke: #64787b; }
-.flow-illustration .accent-stroke { stroke: var(--accent); }
-.flow-illustration .accent-fill { fill: var(--accent); stroke: var(--accent); }
-.flow-heading { display: flex; align-items: baseline; gap: 12px; margin-bottom: 9px; }
-.flow-heading span { color: var(--accent); font-size: .7rem; letter-spacing: .05em; }
-.flow-heading h3 { margin: 0; font-size: 1.19rem; font-weight: 620; letter-spacing: -.025em; }
-.flow-step > p { max-width: 315px; margin-bottom: 0; color: var(--ink-soft); font-size: .88rem; line-height: 1.65; }
-.research-note { display: flex; gap: 28px; margin: 42px 0 0; border-top: 1px solid var(--line); padding-top: 22px; color: var(--ink-soft); font-size: .83rem; }
-.research-note span { flex: none; color: var(--accent); font-weight: 600; }
+.research-section, .experience-section, .honors-section { background: var(--surface); }
+.research-section .section-intro { margin-bottom: 0; }
+.research-section .section-intro > p:last-child { max-width: 760px; }
+.honors-section { padding-block: clamp(64px, 7vw, 90px); }
+.honors-section .section-intro { margin-bottom: 30px; }
+.honors-section .section-intro h2 { font-size: clamp(2rem, 3.5vw, 2.7rem); }
 
 .experience-list, .education-list, .publication-list { border-top: 1px solid var(--line); }
 .experience-item, .education-item, .publication { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 35px; border-bottom: 1px solid var(--line); padding: 25px 0 27px; }
@@ -88,8 +80,6 @@ section[id] { scroll-margin-top: 88px; }
 .experience-item h3 a, .publication h3 a { text-decoration: none; }
 .experience-item h3 a:hover, .publication h3 a:hover { color: var(--accent); }
 .experience-role, .education-detail { margin-bottom: 6px; color: var(--muted); font-size: .81rem; }
-.honors { margin-top: 42px; }
-.honors > h3 { margin-bottom: 15px; font-size: 1.02rem; font-weight: 620; letter-spacing: -.02em; }
 .honors-list { border-top: 1px solid var(--line); }
 .honor-item { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 35px; border-bottom: 1px solid var(--line); padding: 15px 0; }
 .honor-item > span { color: var(--muted); font-size: .76rem; }
@@ -137,14 +127,6 @@ section[id] { scroll-margin-top: 88px; }
   .hero-photo { width: min(100%, 270px); margin: 42px 0 0; }
   .section { padding-block: 76px; }
   .section-intro { margin-bottom: 32px; }
-  .research-flow { grid-template-columns: 1fr; gap: 18px; }
-  .flow-step { display: grid; grid-template-columns: 86px minmax(0, 1fr); gap: 0 14px; padding-top: 17px; }
-  .flow-illustration { grid-row: 1 / 3; height: 83px; margin: 0; }
-  .flow-illustration svg { width: 100%; height: 75px; }
-  .flow-heading { margin-top: 4px; }
-  .flow-step > p { max-width: none; }
-  .research-note { display: block; margin-top: 27px; }
-  .research-note span { display: block; margin-bottom: 4px; }
   .experience-item, .education-item, .publication { grid-template-columns: 1fr; gap: 8px; padding-block: 21px 23px; }
   .experience-date, .education-date, .publication-meta { margin: 0; }
   .publication-meta span { display: inline; margin: 0 0 0 6px; }

@@ -93,7 +93,7 @@ def build():
 
     y = section(pdf, "Education", y)
     y = entry(pdf, "Seoul National University", "Incoming integrated M.S.-Ph.D., Computer Science and Engineering", "Spring 2027", y)
-    y = entry(pdf, "Seoul National University", "B.S., Mechanical Engineering; additional majors in Computer Science and Economics; GPA 4.12 / 4.30", "Feb 2027 (expected)", y) - 1
+    y = entry(pdf, "Seoul National University", "B.S., Mechanical Engineering, Computer Science, and Economics; GPA 4.12 / 4.30", "Feb 2027 (expected)", y) - 1
 
     y = section(pdf, "Research experience", y)
     y = entry(

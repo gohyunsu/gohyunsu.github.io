@@ -93,16 +93,16 @@ def build():
 
     y = section(pdf, "Education", y)
     y = entry(pdf, "Seoul National University", "Incoming integrated M.S.-Ph.D., Computer Science and Engineering", "Spring 2027", y)
-    y = entry(pdf, "Seoul National University", "B.S., Mechanical Engineering (expected)", "Feb 2027", y) - 1
+    y = entry(pdf, "Seoul National University", "B.S., Mechanical Engineering; additional majors in Computer Science and Economics; GPA 4.12 / 4.30", "Feb 2027 (expected)", y) - 1
 
     y = section(pdf, "Research experience", y)
     y = entry(
         pdf, "Visual Computing Lab", "Research Intern, SNU Computer Science and Engineering", "Jun 2026 - Present", y,
-        note="Supporting automated collection of visual observations and grasp outcomes for robotic-hand research.",
+        note="Supporting automated collection of visual observations and grasp outcomes for robotic grasping.",
     )
     y = entry(
         pdf, "Precision Bioinstrumentation Laboratory", "Undergraduate Researcher, SNU Mechanical Engineering", "Jul 2024 - May 2026", y,
-        note="Studied representations of full single-cell vibrational signals.",
+        note="Analyzed full single-cell vibrational signals with deep learning.",
     )
     y = entry(
         pdf, "Imaging-driven Medical SuperIntelligence Group", "Student Researcher, SNU AI Semiconductor Engineering", "Aug 2025 - Apr 2026", y,
@@ -113,32 +113,34 @@ def build():
         pdf,
         "Microfluidic vibrational transit signals encode multidimensional single-cell biophysical states",
         "Hyunju Ham, <b>Hyunsu Go</b>, Seoyeong Kim, Sechan Park, Jiyul Kim, Su Hyun Lee, Sanghyo Park, Jaehyung Park, Scott R. Manalis, Hyunsook Lee, Joon Ho Kang.",
-        "2026  |  Submitted manuscript",
+        "2026  |  Submitted",
         y,
     )
     y = paper(
         pdf,
         "From Complete Scanpaths to Finding-Level Gaze Targets in Chest Radiography: Structured Cues and Learned Reweighting",
         "Sumin Lee, <b>Hyunsu Go</b>, Subeen Lee, Kyeonghun Kim, Nam-Joon Kim.",
-        "2026  |  MedAI, accepted",
+        "2026  |  MedAI, Accepted",
         y,
     )
     y = paper(
         pdf,
         "MAESIL: Masked Autoencoder for Enhanced Self-Supervised Medical Image Learning",
         "Kyeonghun Kim, Hyeonseok Jung, Youngung Han, Junsu Lim, YeonJu Jean, Seongbin Park, Eunseob Choi, <b>Hyunsu Go</b>, SeoYoung Ju, Seohyoung Park, Gyeongmin Kim, MinJu Kwon, KyungSeok Yuh, Soo Yong Kim, Ken Ying-Kai Liao, Nam-Joon Kim, Hyuk-Jae Lee.",
-        "2026  |  ICEIC, published  |  doi:10.1109/ICEIC69189.2026.11386292",
+        "2026  |  ICEIC, Published  |  doi:10.1109/ICEIC69189.2026.11386292",
         y,
     )
 
     y -= 3
-    y = section(pdf, "Recognition", y)
-    label(pdf, "Presidential Science Scholarship", LEFT, y - 8, size=9.0)
-    pdf.drawRightString(RIGHT, y - 8, "2023 - Present")
-    label(pdf, "Outstanding B.S. Thesis Presentation Award, SNU Mechanical Engineering", LEFT, y - 26, size=9.0)
-    pdf.drawRightString(RIGHT, y - 26, "2026")
+    y = section(pdf, "Honors and scholarships", y)
+    label(pdf, "Presidential Science Scholarship, Korea Student Aid Foundation", LEFT, y - 8, size=9.0)
+    pdf.drawRightString(RIGHT, y - 8, "May 2023 - Present")
+    label(pdf, "Semiconductor Specialization University Scholarship, SNU", LEFT, y - 26, size=9.0)
+    pdf.drawRightString(RIGHT, y - 26, "Aug 2025 - Present")
+    label(pdf, "Outstanding BS Thesis Presentation Award, SNU Mechanical Engineering", LEFT, y - 44, size=9.0)
+    pdf.drawRightString(RIGHT, y - 44, "Jun 2026")
 
-    if y - 30 < 40:
+    if y - 48 < 40:
         raise RuntimeError(f"CV content is too close to the page edge: y={y:.1f}")
     pdf.showPage()
     pdf.save()

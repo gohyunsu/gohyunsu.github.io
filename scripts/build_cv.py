@@ -17,6 +17,7 @@ FONT_DIR = Path("C:/Windows/Fonts")
 
 pdfmetrics.registerFont(TTFont("Arial", str(FONT_DIR / "arial.ttf")))
 pdfmetrics.registerFont(TTFont("Arial-Bold", str(FONT_DIR / "arialbd.ttf")))
+pdfmetrics.registerFontFamily("Arial", normal="Arial", bold="Arial-Bold")
 
 PAGE_W, PAGE_H = A4
 LEFT = 49
@@ -62,8 +63,9 @@ def entry(pdf, title, detail, date, top, *, note=None):
     return top - 37
 
 
-def paper(pdf, title, status, top):
+def paper(pdf, title, authors, status, top):
     bottom = paragraph(pdf, title, LEFT, top, WIDTH, size=9.0, leading=12.5, font="Arial-Bold")
+    bottom = paragraph(pdf, authors, LEFT, bottom - 4, WIDTH, size=8.2, leading=11.4)
     label(pdf, status, LEFT, bottom - 12, size=8.6)
     return bottom - 25
 
@@ -99,7 +101,7 @@ def build():
         note="Supporting automated collection of visual observations and grasp outcomes for robotic-hand research.",
     )
     y = entry(
-        pdf, "Precision Bioinstrumentation Laboratory", "Undergraduate Researcher, SNU Mechanical Engineering", "Jul 2024 - Present", y,
+        pdf, "Precision Bioinstrumentation Laboratory", "Undergraduate Researcher, SNU Mechanical Engineering", "Jul 2024 - May 2026", y,
         note="Studied representations of full single-cell vibrational signals.",
     )
     y = entry(
@@ -107,9 +109,27 @@ def build():
     ) - 1
 
     y = section(pdf, "Selected publications", y)
-    y = paper(pdf, "Microfluidic vibrational transit signals encode multidimensional single-cell biophysical states", "2026  |  Submitted manuscript", y)
-    y = paper(pdf, "From Complete Scanpaths to Finding-Level Gaze Targets in Chest Radiography: Structured Cues and Learned Reweighting", "2026  |  MedAI, accepted  |  Equal contribution", y)
-    y = paper(pdf, "MAESIL: Masked Autoencoder for Enhanced Self-Supervised Medical Image Learning", "2026  |  ICEIC, published  |  doi:10.1109/ICEIC69189.2026.11386292", y)
+    y = paper(
+        pdf,
+        "Microfluidic vibrational transit signals encode multidimensional single-cell biophysical states",
+        "Hyunju Ham, <b>Hyunsu Go</b>, Seoyeong Kim, Sechan Park, Jiyul Kim, Su Hyun Lee, Sanghyo Park, Jaehyung Park, Scott R. Manalis, Hyunsook Lee, Joon Ho Kang.",
+        "2026  |  Submitted manuscript",
+        y,
+    )
+    y = paper(
+        pdf,
+        "From Complete Scanpaths to Finding-Level Gaze Targets in Chest Radiography: Structured Cues and Learned Reweighting",
+        "Sumin Lee, <b>Hyunsu Go</b>, Subeen Lee, Kyeonghun Kim, Nam-Joon Kim.",
+        "2026  |  MedAI, accepted",
+        y,
+    )
+    y = paper(
+        pdf,
+        "MAESIL: Masked Autoencoder for Enhanced Self-Supervised Medical Image Learning",
+        "Kyeonghun Kim, Hyeonseok Jung, Youngung Han, Junsu Lim, YeonJu Jean, Seongbin Park, Eunseob Choi, <b>Hyunsu Go</b>, SeoYoung Ju, Seohyoung Park, Gyeongmin Kim, MinJu Kwon, KyungSeok Yuh, Soo Yong Kim, Ken Ying-Kai Liao, Nam-Joon Kim, Hyuk-Jae Lee.",
+        "2026  |  ICEIC, published  |  doi:10.1109/ICEIC69189.2026.11386292",
+        y,
+    )
 
     y -= 3
     y = section(pdf, "Recognition", y)

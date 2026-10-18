@@ -95,6 +95,8 @@ section[id] { scroll-margin-top: 88px; }
 
 .publication-meta span { display: block; margin-top: 3px; }
 .publication h3 { max-width: 790px; }
+.publication-authors { max-width: 790px; margin: 7px 0 0; color: var(--muted); font-size: .8rem; line-height: 1.6; }
+.publication-authors strong { color: var(--ink-soft); font-weight: 650; }
 .publication-link { display: inline-block; margin-top: 8px; color: var(--accent); font-size: .76rem; text-decoration: none; }
 .publication-link:hover { text-decoration: underline; text-underline-offset: 3px; }
 .publication-more { margin: 19px 0 0; color: var(--muted); font-size: .8rem; }

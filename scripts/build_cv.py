@@ -78,7 +78,7 @@ def build():
     pdf.setSubject("Research in visual computing and robotics")
 
     label(pdf, "Hyunsu Go", LEFT, 788, size=19, font="Arial-Bold")
-    label(pdf, "Research Intern, Visual Computing Lab, Seoul National University", LEFT, 768, size=9.2)
+    label(pdf, "Undergraduate Intern, Visual Computing Lab, Seoul National University", LEFT, 768, size=9.2)
     label(pdf, "hsmail02@snu.ac.kr  |  gohyunsu.github.io  |  github.com/gohyunsu", LEFT, 752, size=8.8)
     pdf.linkURL("mailto:hsmail02@snu.ac.kr", (LEFT, 747, LEFT + 113, 759), relative=0)
     pdf.linkURL("https://gohyunsu.github.io/", (LEFT + 125, 747, LEFT + 233, 759), relative=0)
@@ -97,15 +97,15 @@ def build():
 
     y = section(pdf, "Research experience", y)
     y = entry(
-        pdf, "Visual Computing Lab", "Research Intern, SNU Computer Science and Engineering", "Jun 2026 - Present", y,
+        pdf, "Visual Computing Lab", "Undergraduate Intern, SNU Computer Science and Engineering", "Jun 2026 - Present", y,
         note="Supporting automated collection of visual observations and grasp outcomes for robotic grasping.",
     )
     y = entry(
-        pdf, "Precision Bioinstrumentation Laboratory", "Undergraduate Researcher, SNU Mechanical Engineering", "Jul 2024 - May 2026", y,
+        pdf, "Precision Bioinstrumentation Laboratory", "Undergraduate Intern, SNU Mechanical Engineering", "Jul 2024 - May 2026", y,
         note="Analyzed full single-cell vibrational signals with deep learning.",
     )
     y = entry(
-        pdf, "Imaging-driven Medical SuperIntelligence Group", "Student Researcher, SNU AI Semiconductor Engineering", "Aug 2025 - Apr 2026", y,
+        pdf, "Imaging-driven Medical SuperIntelligence Group", "Undergraduate Intern, SNU AI Semiconductor Engineering", "Aug 2025 - Apr 2026", y,
     ) - 1
 
     y = section(pdf, "Selected publications", y)

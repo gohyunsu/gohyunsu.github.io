@@ -39,7 +39,8 @@ section[id] { scroll-margin-top: 88px; }
   backdrop-filter: blur(12px);
 }
 .header-inner { display: flex; align-items: center; justify-content: space-between; gap: 30px; min-height: 68px; }
-.wordmark { flex: none; font-size: .95rem; font-weight: 650; letter-spacing: -.02em; text-decoration: none; }
+.wordmark { display: inline-flex; align-items: center; gap: 8px; flex: none; font-size: .95rem; font-weight: 650; letter-spacing: -.02em; text-decoration: none; }
+.wordmark-icon { width: 28px; height: 28px; flex: none; }
 .wordmark-mark { color: var(--accent); font-weight: 400; }
 .site-nav { display: flex; align-items: center; gap: clamp(18px, 2.6vw, 34px); }
 .site-nav a { color: var(--ink-soft); font-size: .78rem; text-decoration: none; transition: color .2s ease; }
@@ -119,7 +120,7 @@ section[id] { scroll-margin-top: 88px; }
 @media (max-width: 700px) {
   .shell { width: min(calc(100% - 38px), var(--content)); }
   .header-inner { display: block; min-height: 0; padding-block: 14px 13px; }
-  .wordmark { display: block; margin-bottom: 11px; }
+  .wordmark { display: flex; width: fit-content; margin-bottom: 11px; }
   .site-nav { justify-content: space-between; gap: 12px; }
   .site-nav a { font-size: .73rem; }
   .hero { display: block; padding-block: 60px 74px; }

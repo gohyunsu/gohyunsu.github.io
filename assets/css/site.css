@@ -69,10 +69,14 @@ section[id] { scroll-margin-top: 88px; }
 .research-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; border-block: 1px solid var(--line); padding-block: 25px 27px; }
 .research-step h3 { margin: 0 0 14px; font-size: 1.08rem; font-weight: 620; letter-spacing: -.02em; line-height: 1.4; }
 .research-step figure { margin: 0; }
-.research-step img { width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border: 1px solid var(--line); }
+.research-step figure > img, .research-video-link { width: 100%; aspect-ratio: 16 / 9; border: 1px solid var(--line); }
+.research-step figure > img { height: auto; object-fit: cover; }
+.research-video-link { position: relative; display: block; overflow: hidden; transition: border-color .2s ease; }
+.research-video-link:hover, .research-video-link:focus-visible { border-color: var(--accent); }
+.research-video-link img, .research-video-link video { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+.research-video-link video { opacity: 0; }
+.research-video-link.is-playing video { opacity: 1; }
 .research-step figcaption { margin-top: 9px; color: var(--muted); font-size: .76rem; }
-.research-step figcaption a { color: inherit; text-decoration: none; transition: color .2s ease; }
-.research-step figcaption a:hover, .research-step figcaption a:focus-visible { color: var(--accent); }
 
 .experience-list, .education-list, .publication-list, .honors-list { border-top: 1px solid var(--line); }
 .experience-item, .education-item, .publication, .honor-item { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 35px; border-bottom: 1px solid var(--line); padding: 25px 0 27px; }
@@ -82,6 +86,7 @@ section[id] { scroll-margin-top: 88px; }
 .experience-item h3 a:hover, .publication h3 a:hover { color: var(--accent); }
 .experience-role, .experience-affiliation, .education-detail, .honor-source { margin-bottom: 6px; color: var(--muted); font-size: .81rem; }
 .experience-role { margin-bottom: 1px; color: var(--ink-soft); }
+.honor-source abbr { text-decoration: none; }
 
 .publication-meta span { display: block; margin-top: 3px; }
 .publication h3 { max-width: 790px; }
@@ -138,5 +143,5 @@ section[id] { scroll-margin-top: 88px; }
 }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .site-nav a, .research-step figcaption a { transition: none; }
+  .site-nav a, .research-video-link { transition: none; }
 }

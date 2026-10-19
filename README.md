@@ -1,12 +1,13 @@
 # Hyunsu Go — personal website
 
-This repository serves [gohyunsu.github.io](https://gohyunsu.github.io/) from the root of `main` with GitHub Pages. The site is plain HTML and CSS; it has no build step.
+This repository serves [gohyunsu.github.io](https://gohyunsu.github.io/) from the root of `main` with GitHub Pages. The site is plain HTML, CSS, and JavaScript; it has no build step.
 
 ## Editing
 
 - Update copy and links in `index.html`.
 - Update layout, type, and colors in `assets/css/site.css`.
-- `assets/img/autodex-grasp.gif` is full AutoDex footage at 2× playback. The Place and Adapt images are concept illustrations, not experiment photos.
+- `assets/js/site.js` plays the AutoDex footage on hover when motion is allowed.
+- `assets/img/autodex-grasp.mp4` contains the full AutoDex footage at 2× playback. The Grasp thumbnail and the Place and Adapt images are concept illustrations, not experiment photos.
 - Update the concise CV in `scripts/build_cv.py`, then regenerate `assets/cv/Hyunsu_Go_CV.pdf` with the bundled Python runtime (requires ReportLab).
 - Preview locally with `python -m http.server 8000`, then open `http://localhost:8000/`.
 

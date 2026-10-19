@@ -82,7 +82,8 @@ section[id] { scroll-margin-top: 88px; }
 .experience-item h3, .education-item h3, .publication h3, .honor-item h3 { margin: 0 0 6px; font-size: 1.08rem; font-weight: 620; letter-spacing: -.02em; line-height: 1.4; }
 .experience-item h3 a, .publication h3 a { text-decoration: none; }
 .experience-item h3 a:hover, .publication h3 a:hover { color: var(--accent); }
-.experience-role, .education-detail, .honor-source { margin-bottom: 6px; color: var(--muted); font-size: .81rem; }
+.experience-role, .experience-affiliation, .education-detail, .honor-source { margin-bottom: 6px; color: var(--muted); font-size: .81rem; }
+.experience-role { margin-bottom: 1px; color: var(--ink-soft); }
 
 .publication-meta span { display: block; margin-top: 3px; }
 .publication h3 { max-width: 790px; }

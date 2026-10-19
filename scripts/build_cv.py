@@ -92,19 +92,19 @@ def build():
     ) - 18
 
     y = section(pdf, "Education", y)
-    y = entry(pdf, "Seoul National University", "Incoming integrated M.S.-Ph.D., Computer Science and Engineering", "Spring 2027", y)
+    y = entry(pdf, "Seoul National University", "Incoming Integrated M.S.-Ph.D. Program, Computer Science and Engineering", "Spring 2027", y)
     y = entry(pdf, "Seoul National University", "B.S., Mechanical Engineering, Computer Science, and Economics; GPA 4.12 / 4.30", "Feb 2027 (expected)", y) - 1
 
     y = section(pdf, "Research experience", y)
     y = entry(
-        pdf, "Visual Computing Lab", "Undergraduate Intern, SNU Computer Science and Engineering", "Jun 2026 - Present", y,
+        pdf, "Visual Computing Lab", "Undergraduate Intern | Seoul National University | Computer Science and Engineering", "Jun 2026 - Present", y,
     )
     y = entry(
-        pdf, "Precision Bioinstrumentation Laboratory", "Undergraduate Intern, SNU Mechanical Engineering", "Jul 2024 - May 2026", y,
+        pdf, "Precision Bioinstrumentation Laboratory", "Undergraduate Intern | Seoul National University | Mechanical Engineering", "Jul 2024 - May 2026", y,
         note="Analyzed full single-cell vibrational signals with deep learning.",
     )
     y = entry(
-        pdf, "Imaging-driven Medical SuperIntelligence Group", "Undergraduate Intern, SNU AI Semiconductor Engineering", "Aug 2025 - Apr 2026", y,
+        pdf, "Imaging-driven Medical SuperIntelligence Group", "Undergraduate Intern | Seoul National University | AI Semiconductor Engineering", "Aug 2025 - Apr 2026", y,
     ) - 1
 
     y = section(pdf, "Selected publications", y)

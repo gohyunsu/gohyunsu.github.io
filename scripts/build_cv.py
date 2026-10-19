@@ -92,8 +92,8 @@ def build():
     ) - 18
 
     y = section(pdf, "Education", y)
-    y = entry(pdf, "Seoul National University", "Incoming Integrated M.S.-Ph.D. Program, Computer Science and Engineering", "Spring 2027", y)
-    y = entry(pdf, "Seoul National University", "B.S., Mechanical Engineering, Computer Science, and Economics; GPA 4.12 / 4.30", "Feb 2027 (expected)", y) - 1
+    y = entry(pdf, "Seoul National University", "Incoming Combined Master's & Ph.D. Program, Computer Science and Engineering", "Spring 2027", y)
+    y = entry(pdf, "Seoul National University", "B.S., Mechanical Engineering, Computer Science and Engineering, and Economics; GPA 4.12 / 4.30", "Feb 2027 (expected)", y) - 1
 
     y = section(pdf, "Research experience", y)
     y = entry(
@@ -104,7 +104,7 @@ def build():
         note="Analyzed full single-cell vibrational signals with deep learning.",
     )
     y = entry(
-        pdf, "Imaging-driven Medical SuperIntelligence Group", "Undergraduate Intern | Seoul National University | AI Semiconductor Engineering", "Aug 2025 - Apr 2026", y,
+        pdf, "Imaging-driven Medical SuperIntelligence Lab", "Undergraduate Intern | Seoul National University | AI Semiconductor Engineering", "Aug 2025 - Apr 2026", y,
     ) - 1
 
     y = section(pdf, "Selected publications", y)
@@ -134,12 +134,14 @@ def build():
     y = section(pdf, "Honors and scholarships", y)
     label(pdf, "Presidential Science Scholarship, Korea Student Aid Foundation", LEFT, y - 8, size=9.0)
     pdf.drawRightString(RIGHT, y - 8, "May 2023 - Present")
-    label(pdf, "Semiconductor Specialization University Scholarship, SNU", LEFT, y - 26, size=9.0)
+    label(pdf, "Semiconductor Specialized University Scholarship, Seoul National University", LEFT, y - 26, size=9.0)
     pdf.drawRightString(RIGHT, y - 26, "Aug 2025 - Present")
-    label(pdf, "Outstanding BS Thesis Presentation Award, SNU Mechanical Engineering", LEFT, y - 44, size=9.0)
+    label(pdf, "Outstanding BS Thesis Presentation Award, Seoul National University, Mechanical Engineering", LEFT, y - 44, size=9.0)
     pdf.drawRightString(RIGHT, y - 44, "Jun 2026")
+    label(pdf, "Best Presentation Award, ICEAS 2024", LEFT, y - 62, size=9.0)
+    pdf.drawRightString(RIGHT, y - 62, "Aug 2024")
 
-    if y - 48 < 40:
+    if y - 66 < 40:
         raise RuntimeError(f"CV content is too close to the page edge: y={y:.1f}")
     pdf.showPage()
     pdf.save()

@@ -73,6 +73,8 @@ section[id] { scroll-margin-top: 88px; }
 .research-step figure { margin: 0; }
 .research-step img { width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border: 1px solid var(--line); }
 .research-step figcaption { margin-top: 9px; color: var(--muted); font-size: .76rem; }
+.research-step figcaption a { color: var(--ink-soft); text-decoration-color: var(--muted); text-underline-offset: 3px; }
+.research-step figcaption a:hover { color: var(--accent); text-decoration-color: var(--accent); }
 
 .experience-list, .education-list, .publication-list, .honors-list { border-top: 1px solid var(--line); }
 .experience-item, .education-item, .publication, .honor-item { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 35px; border-bottom: 1px solid var(--line); padding: 25px 0 27px; }

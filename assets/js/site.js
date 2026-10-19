@@ -10,7 +10,6 @@ if (graspLink) {
     pointerInside = false;
     graspLink.classList.remove('is-playing');
     video.pause();
-    if (video.readyState > 0) video.currentTime = 0;
   };
 
   graspLink.addEventListener('pointerenter', async () => {

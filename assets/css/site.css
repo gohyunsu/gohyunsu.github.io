@@ -67,8 +67,12 @@ section[id] { scroll-margin-top: 88px; }
 .section-intro h2, .contact-grid h2 { margin-bottom: 15px; font-size: clamp(2.25rem, 4vw, 3.35rem); font-weight: 620; letter-spacing: -.05em; line-height: 1.12; }
 .section-intro > p:last-child { max-width: 680px; margin-bottom: 0; color: var(--ink-soft); font-size: .96rem; line-height: 1.7; }
 .research-section, .experience-section, .honors-section { background: var(--surface); }
-.research-section .section-intro { margin-bottom: 0; }
 .research-section .section-intro > p:last-child { max-width: 760px; }
+.research-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; border-block: 1px solid var(--line); padding-block: 25px 27px; }
+.research-step h3 { margin: 0 0 14px; font-size: 1.08rem; font-weight: 620; letter-spacing: -.02em; line-height: 1.4; }
+.research-step figure { margin: 0; }
+.research-step img { width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; border: 1px solid var(--line); }
+.research-step figcaption { margin-top: 9px; color: var(--muted); font-size: .76rem; }
 
 .experience-list, .education-list, .publication-list, .honors-list { border-top: 1px solid var(--line); }
 .experience-item, .education-item, .publication, .honor-item { display: grid; grid-template-columns: 180px minmax(0, 1fr); gap: 35px; border-bottom: 1px solid var(--line); padding: 25px 0 27px; }
@@ -119,6 +123,9 @@ section[id] { scroll-margin-top: 88px; }
   .hero-photo { width: min(100%, 270px); margin: 42px 0 0; }
   .section { padding-block: 68px; }
   .section-intro { margin-bottom: 32px; }
+  .research-steps { display: block; border-bottom: 0; padding-block: 0; }
+  .research-step { border-bottom: 1px solid var(--line); padding-block: 21px 23px; }
+  .research-step h3 { margin-bottom: 12px; }
   .experience-item, .education-item, .publication, .honor-item { grid-template-columns: 1fr; gap: 8px; padding-block: 21px 23px; }
   .experience-date, .education-date, .publication-meta, .honor-date { margin: 0; }
   .publication-meta span { display: inline; margin: 0 0 0 6px; }

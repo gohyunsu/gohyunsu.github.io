@@ -7,6 +7,7 @@ This repository serves [gohyunsu.github.io](https://gohyunsu.github.io/) from th
 - Update copy and links in `index.html`.
 - Update layout, type, and colors in `assets/css/site.css`.
 - Replace `assets/img/profile.png` when the portrait changes.
+- `assets/img/autodex-grasp.gif` is full AutoDex footage at 2× playback. The Place and Adapt images are concept illustrations, not experiment photos.
 - Update the concise CV in `scripts/build_cv.py`, then regenerate `assets/cv/Hyunsu_Go_CV.pdf` with the bundled Python runtime (requires ReportLab).
 - Preview locally with `python -m http.server 8000`, then open `http://localhost:8000/`.
 

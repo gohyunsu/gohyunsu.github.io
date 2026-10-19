@@ -98,7 +98,6 @@ def build():
     y = section(pdf, "Research experience", y)
     y = entry(
         pdf, "Visual Computing Lab", "Undergraduate Intern, SNU Computer Science and Engineering", "Jun 2026 - Present", y,
-        note="Supporting automated collection of visual observations and grasp outcomes for robotic grasping.",
     )
     y = entry(
         pdf, "Precision Bioinstrumentation Laboratory", "Undergraduate Intern, SNU Mechanical Engineering", "Jul 2024 - May 2026", y,

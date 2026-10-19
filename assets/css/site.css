@@ -117,7 +117,7 @@ section[id] { scroll-margin-top: 88px; }
   .hero h1 { font-size: clamp(3.2rem, 10vw, 4.5rem); }
   .hero-lead { font-size: 1.42rem; }
   .hero-photo { width: min(100%, 270px); margin: 42px 0 0; }
-  .section { padding-block: 76px; }
+  .section { padding-block: 68px; }
   .section-intro { margin-bottom: 32px; }
   .experience-item, .education-item, .publication, .honor-item { grid-template-columns: 1fr; gap: 8px; padding-block: 21px 23px; }
   .experience-date, .education-date, .publication-meta, .honor-date { margin: 0; }
@@ -125,8 +125,8 @@ section[id] { scroll-margin-top: 88px; }
   .contact-grid { grid-template-columns: 1fr; gap: 30px; }
 }
 @media (max-width: 390px) {
-  .site-nav { gap: 5px; }
-  .site-nav a { font-size: .67rem; }
+  .site-nav { gap: 4px; }
+  .site-nav a { font-size: .71rem; }
   .hero h1 { font-size: 3.1rem; }
   .contact-email { font-size: 1.12rem; }
 }

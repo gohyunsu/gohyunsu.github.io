@@ -49,7 +49,7 @@ section[id] { scroll-margin-top: 88px; }
 .hero { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(250px, .7fr); align-items: center; gap: clamp(48px, 8vw, 110px); min-height: 590px; padding-block: 78px 88px; }
 .hero-copy { max-width: 660px; }
 .hero-portrait { width: 100%; margin: 0; }
-.hero-portrait img { width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: contain; }
+.hero-portrait img { width: 100%; height: auto; aspect-ratio: 3 / 4; object-fit: cover; border: 1px solid var(--line); }
 .eyebrow, .section-label { color: var(--accent); font-size: .71rem; font-weight: 650; letter-spacing: .12em; line-height: 1.55; text-transform: uppercase; }
 .eyebrow { margin-bottom: 18px; }
 .hero h1 { margin: 0 0 15px; font-size: clamp(3.75rem, 6.5vw, 5.55rem); font-weight: 650; letter-spacing: -.065em; line-height: 1.02; }

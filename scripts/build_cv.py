@@ -105,7 +105,7 @@ def build():
 
     y = section(pdf, "Education", y)
     y = entry(pdf, "Seoul National University", "M.S./Ph.D. Program in Computer Science and Engineering", "Mar 2027 - Present", y)
-    y = entry(pdf, "Seoul National University", "B.S., Mechanical Engineering, Computer Science and Engineering, and Economics; GPA: 4.12 / 4.30", "Mar 2021 - Feb 2027", y) - 1
+    y = entry(pdf, "Seoul National University", "B.S., Mechanical Engineering, Computer Science and Engineering, and Economics; GPA 4.12/4.30", "Mar 2021 - Feb 2027", y) - 1
 
     y = section(pdf, "Research experience", y)
     y = entry(
@@ -144,12 +144,12 @@ def build():
 
     y = section(pdf, "Honors and scholarships", y)
     y = honor(pdf, "2nd Place, AI Robot Challenge", "Jul 2026", y,
-              detail="Seoul National University: Robotics Institute and Department of Mechanical Engineering")
+              detail="Seoul National University, Robotics Institute and Department of Mechanical Engineering")
     y = honor(pdf, "Outstanding B.S. Thesis Presentation Award, Seoul National University, Department of Mechanical Engineering", "Jun 2026", y,
               detail="Learning Single-Cell Perturbation Responses from Suspended Microchannel Resonator Waveforms")
     y = honor(pdf, "Semiconductor Specialized University Scholarship, Seoul National University", "Aug 2025 - Present", y)
     y = honor(pdf, "Best Presentation Award", "Aug 2024", y,
-              detail="International Conference on Energy, Aquatech and Sustainability (organized by the Academic Society for Appropriate Technology)",
+              detail="International Conference on Energy, Aquatech and Sustainability",
               second_detail="Smart Chicken Coops: Implementing Appropriate Technology for Rural Agriculture in Laos")
     y = honor(pdf, "Presidential Science Scholarship, Korea Student Aid Foundation", "May 2023 - Present", y)
 

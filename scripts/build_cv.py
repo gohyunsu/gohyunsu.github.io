@@ -70,6 +70,15 @@ def paper(pdf, title, authors, status, top):
     return bottom - 25
 
 
+def honor(pdf, title, date, top, *, detail=None):
+    label(pdf, title, LEFT, top - 8, size=9.0)
+    pdf.drawRightString(RIGHT, top - 8, date)
+    if detail:
+        label(pdf, detail, LEFT, top - 20, size=8.1)
+        return top - 26
+    return top - 18
+
+
 def build():
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     pdf = canvas.Canvas(str(OUTPUT), pagesize=A4, pageCompression=1)
@@ -132,16 +141,16 @@ def build():
 
     y -= 3
     y = section(pdf, "Honors and scholarships", y)
-    label(pdf, "Outstanding BS Thesis Presentation Award, Seoul National University, Mechanical Engineering", LEFT, y - 8, size=9.0)
-    pdf.drawRightString(RIGHT, y - 8, "Jun 2026")
-    label(pdf, "Semiconductor Specialized University Scholarship, Seoul National University", LEFT, y - 26, size=9.0)
-    pdf.drawRightString(RIGHT, y - 26, "Aug 2025 - Present")
-    label(pdf, "Best Presentation Award, ICEAS 2024", LEFT, y - 44, size=9.0)
-    pdf.drawRightString(RIGHT, y - 44, "Aug 2024")
-    label(pdf, "Presidential Science Scholarship, Korea Student Aid Foundation", LEFT, y - 62, size=9.0)
-    pdf.drawRightString(RIGHT, y - 62, "May 2023 - Present")
+    y = honor(pdf, "2nd Place, AI Robot Challenge 2026", "Jul 2026", y,
+              detail="Seoul National University Robotics Institute, Department of Mechanical Engineering")
+    y = honor(pdf, "Outstanding BS Thesis Presentation Award, Seoul National University, Mechanical Engineering", "Jun 2026", y,
+              detail="Learning Single-Cell Perturbation Responses from Suspended Microchannel Resonator Waveforms")
+    y = honor(pdf, "Semiconductor Specialized University Scholarship, Seoul National University", "Aug 2025 - Present", y)
+    y = honor(pdf, "Best Presentation Award, ICEAS 2024", "Aug 2024", y,
+              detail="Smart Chicken Coops: Implementing Appropriate Technology for Rural Agriculture in Laos")
+    y = honor(pdf, "Presidential Science Scholarship, Korea Student Aid Foundation", "May 2023 - Present", y)
 
-    if y - 66 < 40:
+    if y < 40:
         raise RuntimeError(f"CV content is too close to the page edge: y={y:.1f}")
     pdf.showPage()
     pdf.save()

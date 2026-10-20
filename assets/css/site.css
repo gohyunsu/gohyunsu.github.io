@@ -87,7 +87,6 @@ section[id] { scroll-margin-top: 88px; }
 .experience-item h3 a:hover, .publication h3 a:hover { color: var(--accent); }
 .experience-role, .experience-affiliation, .education-detail, .honor-source { margin-bottom: 6px; color: var(--muted); font-size: .81rem; }
 .experience-role { margin-bottom: 1px; color: var(--ink-soft); }
-.honor-source abbr { text-decoration: none; }
 .honor-work { margin: 2px 0 0; color: var(--ink-soft); font-size: .82rem; line-height: 1.55; font-style: italic; }
 .honor-links { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 4px 0 0; }
 .honor-links a { color: var(--accent); font-size: .76rem; text-decoration: none; }

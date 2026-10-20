@@ -70,11 +70,14 @@ def paper(pdf, title, authors, status, top):
     return bottom - 25
 
 
-def honor(pdf, title, date, top, *, detail=None):
+def honor(pdf, title, date, top, *, detail=None, second_detail=None):
     label(pdf, title, LEFT, top - 8, size=9.0)
     pdf.drawRightString(RIGHT, top - 8, date)
     if detail:
         label(pdf, detail, LEFT, top - 20, size=8.1)
+        if second_detail:
+            label(pdf, second_detail, LEFT, top - 32, size=8.1)
+            return top - 38
         return top - 26
     return top - 18
 
@@ -102,17 +105,17 @@ def build():
 
     y = section(pdf, "Education", y)
     y = entry(pdf, "Seoul National University", "M.S./Ph.D. Program in Computer Science and Engineering", "Mar 2027 - Present", y)
-    y = entry(pdf, "Seoul National University", "B.S., Mechanical Engineering, Computer Science and Engineering, and Economics; GPA 4.12 / 4.30", "Mar 2021 - Feb 2027", y) - 1
+    y = entry(pdf, "Seoul National University", "B.S., Mechanical Engineering, Computer Science and Engineering, and Economics; GPA: 4.12 / 4.30", "Mar 2021 - Feb 2027", y) - 1
 
     y = section(pdf, "Research experience", y)
     y = entry(
-        pdf, "Visual Computing Lab", "Undergraduate Intern | Seoul National University | Computer Science and Engineering", "Jun 2026 - Present", y,
+        pdf, "Visual Computing Lab", "Undergraduate Intern | Seoul National University, Department of Computer Science and Engineering", "Jun 2026 - Present", y,
     )
     y = entry(
-        pdf, "Imaging-driven Medical SuperIntelligence Lab", "Undergraduate Intern | Seoul National University | AI Semiconductor Engineering", "Aug 2025 - Apr 2026", y,
+        pdf, "Imaging-driven Medical SuperIntelligence Lab", "Undergraduate Intern | Seoul National University, Interdisciplinary Major in AI Semiconductor Engineering", "Aug 2025 - Apr 2026", y,
     )
     y = entry(
-        pdf, "Precision Bioinstrumentation Lab", "Undergraduate Intern | Seoul National University | Mechanical Engineering", "Jul 2024 - May 2026", y,
+        pdf, "Precision Bioinstrumentation Lab", "Undergraduate Intern | Seoul National University, Department of Mechanical Engineering", "Jul 2024 - May 2026", y,
         note="Analyzed full single-cell vibrational signals with deep learning.",
     ) - 1
 
@@ -128,26 +131,26 @@ def build():
         pdf,
         "From Complete Scanpaths to Finding-Level Gaze Targets in Chest Radiography: Structured Cues and Learned Reweighting",
         "Sumin Lee, <b>Hyunsu Go</b>, Subeen Lee, Kyeonghun Kim, and Nam-Joon Kim.",
-        "2026  |  MedAI, Accepted",
+        "2026  |  Accepted at MedAI",
         y,
     )
     y = paper(
         pdf,
         "MAESIL: Masked Autoencoder for Enhanced Self-supervised Medical Image Learning",
         "Kyeonghun Kim, Hyeonseok Jung, Youngung Han, Junsu Lim, Yeonju Jean, Seongbin Park, Eunseob Choi, <b>Hyunsu Go</b>, Seoyoung Ju, Seohyoung Park, Gyeongmin Kim, Minju Kwon, Kyungseok Yuh, Soo Yong Kim, Ken Ying-Kai Liao, Nam-Joon Kim, Hyuk-Jae Lee.",
-        "2026  |  ICEIC, Published  |  doi:10.1109/ICEIC69189.2026.11386292",
+        "2026  |  Published in ICEIC proceedings  |  doi:10.1109/ICEIC69189.2026.11386292",
         y,
     )
 
-    y -= 3
     y = section(pdf, "Honors and scholarships", y)
-    y = honor(pdf, "2nd Place, AI Robot Challenge 2026", "Jul 2026", y,
-              detail="Seoul National University Robotics Institute, Department of Mechanical Engineering")
-    y = honor(pdf, "Outstanding BS Thesis Presentation Award, Seoul National University, Mechanical Engineering", "Jun 2026", y,
+    y = honor(pdf, "2nd Place, AI Robot Challenge", "Jul 2026", y,
+              detail="Seoul National University: Robotics Institute and Department of Mechanical Engineering")
+    y = honor(pdf, "Outstanding B.S. Thesis Presentation Award, Seoul National University, Department of Mechanical Engineering", "Jun 2026", y,
               detail="Learning Single-Cell Perturbation Responses from Suspended Microchannel Resonator Waveforms")
     y = honor(pdf, "Semiconductor Specialized University Scholarship, Seoul National University", "Aug 2025 - Present", y)
-    y = honor(pdf, "Best Presentation Award, ICEAS 2024", "Aug 2024", y,
-              detail="Smart Chicken Coops: Implementing Appropriate Technology for Rural Agriculture in Laos")
+    y = honor(pdf, "Best Presentation Award", "Aug 2024", y,
+              detail="International Conference on Energy, Aquatech and Sustainability (organized by the Academic Society for Appropriate Technology)",
+              second_detail="Smart Chicken Coops: Implementing Appropriate Technology for Rural Agriculture in Laos")
     y = honor(pdf, "Presidential Science Scholarship, Korea Student Aid Foundation", "May 2023 - Present", y)
 
     if y < 40:
